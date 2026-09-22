@@ -15,7 +15,61 @@ class _HydroSyncAppState extends State<HydroSyncApp>{
 class LoginPage extends StatefulWidget{final ApiClient api;final void Function(SessionUser) onLogin;const LoginPage({super.key,required this.api,required this.onLogin});@override State<LoginPage> createState()=>_LoginPageState();}
 class _LoginPageState extends State<LoginPage>{final email=TextEditingController(),pass=TextEditingController();bool busy=false;String? error;
 Future<void> submit()async{setState(()=>busy=true);try{final d=await widget.api.login(email.text.trim(),pass.text);widget.onLogin(SessionUser.fromJson(d['user']));}catch(e){setState(()=>error='$e');}finally{setState(()=>busy=false);}}
-@override Widget build(BuildContext c)=>Directionality(textDirection:TextDirection.rtl,child:Scaffold(body:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:430),child:Padding(padding:const EdgeInsets.all(24),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.water_drop,size:60,color:Theme.of(c).colorScheme.primary),const SizedBox(height:12),const Text('Municipal HydroSync',style:TextStyle(fontSize:25,fontWeight:FontWeight.bold)),const Text('نظام العمليات الميدانية للمياه',style:TextStyle(fontSize:16)),const SizedBox(height:24),TextField(controller:email,decoration:const InputDecoration(labelText:'البريد الإلكتروني',prefixIcon:Icon(Icons.email))),const SizedBox(height:12),TextField(controller:pass,obscureText:true,decoration:const InputDecoration(labelText:'كلمة المرور',prefixIcon:Icon(Icons.lock))),if(error!=null)Padding(padding:const EdgeInsets.only(top:12),child:Text(error!,style:const TextStyle(color:Colors.red))),const SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(onPressed:busy?null:submit,child:busy?const SizedBox(width:20,height:20,child:CircularProgressIndicator()):const Text('تسجيل الدخول')))]))))));
+@override
+Widget build(BuildContext context) {
+  return Directionality(
+    textDirection: TextDirection.rtl,
+    child: Scaffold(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.water_drop, size: 60, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(height: 12),
+                    const Text('Municipal HydroSync', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
+                    const Text('نظام العمليات الميدانية للمياه', style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: email,
+                      decoration: const InputDecoration(labelText: 'البريد الإلكتروني', prefixIcon: Icon(Icons.email)),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: pass,
+                      obscureText: true,
+                      decoration: const InputDecoration(labelText: 'كلمة المرور', prefixIcon: Icon(Icons.lock)),
+                    ),
+                    if (error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(error!, style: const TextStyle(color: Colors.red)),
+                      ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: busy ? null : submit,
+                        child: busy
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator())
+                            : const Text('تسجيل الدخول'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 class HomePage extends StatefulWidget {
   final ApiClient api;
