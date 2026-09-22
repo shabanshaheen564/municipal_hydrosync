@@ -1,122 +1,24 @@
 import 'package:flutter/material.dart';
+import 'api.dart';
+import 'models.dart';
+import 'screens_extra.dart';
 
-void main() {
-  runApp(const MyApp());
+void main()=>runApp(const HydroSyncApp());
+
+class HydroSyncApp extends StatefulWidget{const HydroSyncApp({super.key});@override State<HydroSyncApp> createState()=>_HydroSyncAppState();}
+class _HydroSyncAppState extends State<HydroSyncApp>{
+  final api=ApiClient();SessionUser? user;bool loading=true;
+  @override void initState(){super.initState();_boot();}
+  Future<void> _boot() async{if(await api.isLoggedIn()){user=await api.session();}setState(()=>loading=false);}
+  @override Widget build(BuildContext c)=>MaterialApp(debugShowCheckedModeBanner:false,title:'Municipal HydroSync',theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:Colors.blue),useMaterial3:true),home:loading?const Scaffold(body:Center(child:CircularProgressIndicator())):user==null?LoginPage(api:api,onLogin:(u)=>setState(()=>user=u)):HomePage(api:api,user:user!,onLogout:()=>setState(()=>user=null)));
 }
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
-  }
-}
+class LoginPage extends StatefulWidget{final ApiClient api;final void Function(SessionUser) onLogin;const LoginPage({super.key,required this.api,required this.onLogin});@override State<LoginPage> createState()=>_LoginPageState();}
+class _LoginPageState extends State<LoginPage>{final email=TextEditingController(),pass=TextEditingController();bool busy=false;String? error;
+Future<void> submit()async{setState(()=>busy=true);try{final d=await widget.api.login(email.text.trim(),pass.text);widget.onLogin(SessionUser.fromJson(d['user']));}catch(e){setState(()=>error='$e');}finally{setState(()=>busy=false);}}
+@override Widget build(BuildContext c)=>Directionality(textDirection:TextDirection.rtl,child:Scaffold(body:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:430),child:Padding(padding:const EdgeInsets.all(24),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.water_drop,size:60,color:Theme.of(c).colorScheme.primary),const SizedBox(height:12),const Text('Municipal HydroSync',style:TextStyle(fontSize:25,fontWeight:FontWeight.bold)),const Text('نظام العمليات الميدانية للمياه',style:TextStyle(fontSize:16)),const SizedBox(height:24),TextField(controller:email,decoration:const InputDecoration(labelText:'البريد الإلكتروني',prefixIcon:Icon(Icons.email))),const SizedBox(height:12),TextField(controller:pass,obscureText:true,decoration:const InputDecoration(labelText:'كلمة المرور',prefixIcon:Icon(Icons.lock))),if(error!=null)Padding(padding:const EdgeInsets.only(top:12),child:Text(error!,style:const TextStyle(color:Colors.red))),const SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(onPressed:busy?null:submit,child:busy?const CircularProgressIndicator():const Text('تسجيل الدخول')))]))))))));}}
+class HomePage extends StatefulWidget{final ApiClient api;final SessionUser user;final VoidCallback onLogout;const HomePage({super.key,required this.api,required this.user,required this.onLogout});@override State<HomePage> createState()=>_HomePageState();}
+class _HomePageState extends State<HomePage>{int tab=0;int pending=0;@override void initState(){super.initState();sync();}
+Future<void>sync()async{final n=await widget.api.syncPending();final p=await widget.api.pendingCount();if(mounted){setState(()=>pending=p);if(n>0)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('تمت مزامنة $n عملية')));}}
+@override Widget build(BuildContext c){final pages=[Dashboard(api:widget.api),ListPage(api:widget.api,endpoint:'/complaints',title:'الشكاوى',icon:Icons.report_problem),ListPage(api:widget.api,endpoint:'/work-orders',title:'المهام الميدانية',icon:Icons.engineering),MapPage(api:widget.api),ProfilePage(user:widget.user,api:widget.api,onLogout:widget.onLogout)];return Directionality(textDirection:TextDirection.rtl,child:Scaffold(appBar:AppBar(title:const Text('Municipal HydroSync'),actions:[if(pending>0)Padding(padding:const EdgeInsets.all(12),child:Badge(label:Text('$pending'),child:const Icon(Icons.sync))),IconButton(onPressed:sync,icon:const Icon(Icons.sync))]),body:pages[tab],bottomNavigationBar:NavigationBar(selectedIndex:tab,onDestinationSelected:(i)=>setState(()=>tab=i),destinations:const[NavigationDestination(icon:Icon(Icons.dashboard),label:'الرئيسية'),NavigationDestination(icon:Icon(Icons.report),label:'الشكاوى'),NavigationDestination(icon:Icon(Icons.engineering),label:'المهام'),NavigationDestination(icon:Icon(Icons.map),label:'الخريطة'),NavigationDestination(icon:Icon(Icons.person),label:'حسابي')]));}}
+class Dashboard extends StatefulWidget{final ApiClient api;const Dashboard({super.key,required this.api});@override State<Dashboard> createState()=>_DashboardState();}
+class _DashboardState extends State<Dashboard>{Map<String,dynamic>? d;@override void initState(){super.initState();load();}Future<void>load()async{try{final x=await widget.api.summary();if(mounted)setState(()=>d=x);}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('$e')));}}@override Widget build(BuildContext c){if(d==null)return const Center(child:CircularProgressIndicator());final entries=d!.entries.where((e)=>e.value is num).toList();return RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(16),children:[const Text('ملخص العمليات',style:TextStyle(fontSize:24,fontWeight:FontWeight.bold)),const SizedBox(height:12),Wrap(spacing:12,runSpacing:12,children:entries.map((e)=>SizedBox(width:170,child:Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('${e.value}',style:const TextStyle(fontSize:28,fontWeight:FontWeight.bold)),Text(e.key)]))))).toList())]));}}
