@@ -1,16 +1,29 @@
-# municipal_hydrosync
+# Municipal HydroSync
 
-A new Flutter project.
+تطبيق Flutter ميداني مرتبط مباشرة مع **Water GIS Management System** عبر Laravel REST API + Sanctum.
 
-## Getting Started
+## التشغيل
 
-This project is a starting point for a Flutter application.
+Android emulator:
+```bash
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+```
 
-A few resources to get you started if this is your first Flutter project:
+جهاز حقيقي داخل الشبكة:
+```bash
+flutter run --dart-define=API_BASE_URL=http://SERVER-IP:8000/api
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+يتم حفظ Sanctum token محلياً باستخدام SharedPreferences، وتوجد طابور عمليات POST غير المتصلة بالمركزية وإعادة مزامنتها عند عودة الاتصال.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## الوظائف الحالية
+
+- تسجيل الدخول عبر `POST /api/login`
+- جلسة Sanctum وتسجيل الخروج
+- Dashboard عبر `/api/reports/summary`
+- قائمة الشكاوى والمهام
+- خريطة Leaflet-equivalent عبر flutter_map من `/api/map/operational`
+- عرض الصلاحيات الأساسية
+- طابور عمليات ميدانية عند انقطاع الاتصال
+- CI تلقائي عبر GitHub Actions
