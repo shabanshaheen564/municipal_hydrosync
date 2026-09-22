@@ -16,14 +16,16 @@ class _ListPageState extends State<ListPage> {
   @override void initState() { super.initState(); load(); }
   Future<void> load() async {
     try { final x = await widget.api.list(widget.endpoint); if (mounted) setState(() => data = x); }
-    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}'))); }
+    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'))); }
   }
-  Future<void> addItem() async {
-    final created = widget.endpoint == '/complaints'
-        ? await showDialog<bool>(context: context, builder: (_) => ComplaintForm(api: widget.api))
-        : await showDialog<bool>(context: context, builder: (_) => WorkOrderForm(api: widget.api));
-    if (!mounted) return;
-    if (created == true) await load();
+  void addItem() {
+    final future = widget.endpoint == '/complaints'
+        ? showDialog<bool>(context: context, builder: (_) => ComplaintForm(api: widget.api))
+        : showDialog<bool>(context: context, builder: (_) => WorkOrderForm(api: widget.api));
+    future.then((created) {
+      if (!mounted) return;
+      if (created == true) load();
+    });
   }
   @override Widget build(BuildContext c) {
     return Scaffold(
@@ -97,7 +99,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
     } catch (e) {
       if (mounted) {
         setState(() => busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -174,7 +176,7 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
     } catch (e) {
       if (mounted) {
         setState(() => busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -231,7 +233,7 @@ class _MapPageState extends State<MapPage> {
   @override void initState() { super.initState(); load(); }
   Future<void> load() async {
     try { final x = await widget.api.operationalMap(); if (mounted) setState(() => d = x); }
-    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}'))); }
+    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'))); }
   }
   @override Widget build(BuildContext c) {
     final markers = <Marker>[];
