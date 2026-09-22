@@ -11,7 +11,7 @@ class ApiClient {
   Future<Map<String,String>> _headers() async {final p=await _prefs;final t=p.getString(_tokenKey);return {'Accept':'application/json','Content-Type':'application/json',if(t!=null)'Authorization':'Bearer $t'};}
   Future<dynamic> _send(String method,String path,{Object? body,Map<String,String>? query}) async {
     final uri=Uri.parse('$baseUrl$path').replace(queryParameters:query);final h=await _headers();http.Response r;
-    try {if(method=='GET')r=await http.get(uri,headers:h).timeout(AppConfig.requestTimeout);else if(method=='POST')r=await http.post(uri,headers:h,body:body==null?null:jsonEncode(body)).timeout(AppConfig.requestTimeout);else if(method=='PUT')r=await http.put(uri,headers:h,body:body==null?null:jsonEncode(body)).timeout(AppConfig.requestTimeout);else r=await http.delete(uri,headers:h).timeout(AppConfig.requestTimeout);}
+    try {if(method=='GET'){r=await http.get(uri,headers:h).timeout(AppConfig.requestTimeout);}else if(method=='POST'){r=await http.post(uri,headers:h,body:body==null?null:jsonEncode(body)).timeout(AppConfig.requestTimeout);}else if(method=='PUT'){r=await http.put(uri,headers:h,body:body==null?null:jsonEncode(body)).timeout(AppConfig.requestTimeout);}else{r=await http.delete(uri,headers:h).timeout(AppConfig.requestTimeout);}}
     catch(_){throw const ApiException(0,'تعذر الاتصال بالخادم. تحقق من الإنترنت أو عنوان API.');}
     dynamic d;try{d=jsonDecode(r.body);}catch(_){d=r.body;}if(r.statusCode<200||r.statusCode>=300){throw ApiException(r.statusCode,d is Map?'${d['message']??'حدث خطأ في الخادم'}':'حدث خطأ في الخادم');}return d;
   }
