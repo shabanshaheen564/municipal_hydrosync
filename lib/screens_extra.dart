@@ -16,12 +16,13 @@ class _ListPageState extends State<ListPage> {
   @override void initState() { super.initState(); load(); }
   Future<void> load() async {
     try { final x = await widget.api.list(widget.endpoint); if (mounted) setState(() => data = x); }
-    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\${e}'))); }
+    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}'))); }
   }
   Future<void> addItem() async {
     final created = widget.endpoint == '/complaints'
         ? await showDialog<bool>(context: context, builder: (_) => ComplaintForm(api: widget.api))
         : await showDialog<bool>(context: context, builder: (_) => WorkOrderForm(api: widget.api));
+    if (!mounted) return;
     if (created == true) await load();
   }
   @override Widget build(BuildContext c) {
@@ -37,8 +38,8 @@ class _ListPageState extends State<ListPage> {
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 child: ListTile(
                   leading: Icon(widget.icon),
-                  title: Text('\${m['title'] ?? m['complaint_number'] ?? m['work_order_number'] ?? '-'}'),
-                  subtitle: Text('\${m['status'] ?? '-'} • \${m['priority'] ?? '-'}\\n\${m['description'] ?? ''}'),
+                  title: Text('${m['title'] ?? m['complaint_number'] ?? m['work_order_number'] ?? '-'}'),
+                  subtitle: Text('${m['status'] ?? '-'} • ${m['priority'] ?? '-'}\n${m['description'] ?? ''}'),
                   isThreeLine: true,
                 ),
               );
@@ -96,7 +97,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
     } catch (e) {
       if (mounted) {
         setState(() => busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\${e}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}')));
       }
     }
   }
@@ -173,7 +174,7 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
     } catch (e) {
       if (mounted) {
         setState(() => busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\${e}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}')));
       }
     }
   }
@@ -230,7 +231,7 @@ class _MapPageState extends State<MapPage> {
   @override void initState() { super.initState(); load(); }
   Future<void> load() async {
     try { final x = await widget.api.operationalMap(); if (mounted) setState(() => d = x); }
-    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\${e}'))); }
+    catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e}'))); }
   }
   @override Widget build(BuildContext c) {
     final markers = <Marker>[];
