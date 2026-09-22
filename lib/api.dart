@@ -13,9 +13,9 @@ class ApiClient {
     final uri=Uri.parse('$baseUrl$path').replace(queryParameters:query);final h=await _headers();http.Response r;
     try {if(method=='GET')r=await http.get(uri,headers:h).timeout(AppConfig.requestTimeout);else if(method=='POST')r=await http.post(uri,headers:h,body:body==null?null:jsonEncode(body)).timeout(AppConfig.requestTimeout);else if(method=='PUT')r=await http.put(uri,headers:h,body:body==null?null:jsonEncode(body)).timeout(AppConfig.requestTimeout);else r=await http.delete(uri,headers:h).timeout(AppConfig.requestTimeout);}
     catch(_){throw const ApiException(0,'تعذر الاتصال بالخادم. تحقق من الإنترنت أو عنوان API.');}
-    dynamic d;try{d=jsonDecode(r.body);}catch(_){d=r.body;}if(r.statusCode<200||r.statusCode>=300){throw ApiException(r.statusCode,d is Map?'\${d['message']??'حدث خطأ في الخادم'}':'حدث خطأ في الخادم');}return d;
+    dynamic d;try{d=jsonDecode(r.body);}catch(_){d=r.body;}if(r.statusCode<200||r.statusCode>=300){throw ApiException(r.statusCode,d is Map?'${d['message']??'حدث خطأ في الخادم'}':'حدث خطأ في الخادم');}return d;
   }
-  Future<Map<String,dynamic>> login(String email,String password) async {final d=Map<String,dynamic>.from(await _send('POST','/login',body:{'email':email,'password':password}));final p=await _prefs;await p.setString(_tokenKey,'\${d['token']}');await p.setString(_userKey,jsonEncode(d['user']));return d;}
+  Future<Map<String,dynamic>> login(String email,String password) async {final d=Map<String,dynamic>.from(await _send('POST','/login',body:{'email':email,'password':password}));final p=await _prefs;await p.setString(_tokenKey,'${d['token']}');await p.setString(_userKey,jsonEncode(d['user']));return d;}
   Future<void> logout() async {try{await _send('POST','/logout');}catch(_){ }final p=await _prefs;await p.remove(_tokenKey);await p.remove(_userKey);}
   Future<bool> isLoggedIn() async=>(await _prefs).getString(_tokenKey)!=null;
   Future<SessionUser?> session() async {final raw=(await _prefs).getString(_userKey);return raw==null?null:SessionUser.fromJson(jsonDecode(raw));}
