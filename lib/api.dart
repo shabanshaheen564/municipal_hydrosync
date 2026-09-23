@@ -429,31 +429,71 @@ class ApiClient {
   Future<DateTime?> lastSyncAt() async => LocalStore.lastSyncAt;
 
   Future<int> syncPending() async {
-    final items = LocalStore.queueItems();
-    if (items.isEmpty) return 0;
-    var done = 0;
+    final snapshot = LocalStore.queueItems();
+    if (snapshot.isEmpty) return 0;
 
-    for (final a in items) {
+    var done = 0;
+    for (final queued in snapshot) {
+      final queueId = '\${queued['id']}';
+      final item = LocalStore.queueItem(queueId);
+      if (item == null) continue;
+
+      final nextRetry = DateTime.tryParse('\${item['next_retry_at']}');
+      if (nextRetry != null && nextRetry.isAfter(DateTime.now())) continue;
+
+      final method = '\${item['method']}';
+      final endpoint = '\${item['endpoint']}';
+      var body =
+          item['body'] is Map
+              ? Map<String, dynamic>.from(item['body'])
+              : <String, dynamic>{};
+
+      final isCreate =
+          method == 'POST' &&
+          (endpoint == '/complaints' || endpoint == '/work-orders');
+
+      if (isCreate && body['idempotency_key'] == null) {
+        body['idempotency_key'] = _newIdempotencyKey();
+        item['body'] = body;
+        item['status'] = 'pending';
+        item['next_retry_at'] = null;
+        await LocalStore.updateQueueItem(queueId, item);
+      }
+
       try {
-        await _send('${a['method']}', '${a['endpoint']}', body: a['body']);
-        await LocalStore.removeQueueItem('${a['id']}');
+        final response = await _send(
+          method,
+          endpoint,
+          body: body.isEmpty ? null : body,
+        );
+
+        if (isCreate && response is Map<String, dynamic>) {
+          final user = await _userCacheId();
+          await LocalStore.reconcileCreatedRecord(
+            user,
+            endpoint,
+            queueId,
+            response,
+          );
+        }
+
+        await LocalStore.removeQueueItem(queueId);
         done++;
       } on ApiException catch (e) {
-        // Network failure: keep the item for a later retry.
-        if (e.status == 0) break;
-
-        // Server-side validation/auth/conflict failures must never be
-        // silently deleted. Preserve the action and record the reason.
         await LocalStore.markQueueFailure(
-          '${a['id']}',
+          queueId,
           statusCode: e.status,
           message: e.message,
         );
 
-        // A failed action should not block unrelated queued actions.
+        if (e.status == 0) break;
         continue;
       } catch (_) {
-        // Unknown/network error: keep the item and retry later.
+        await LocalStore.markQueueFailure(
+          queueId,
+          statusCode: 0,
+          message: 'حدث خطأ غير متوقع أثناء المزامنة.',
+        );
         break;
       }
     }
