@@ -31,8 +31,9 @@ class LocalStore {
     if (raw is! String) return null;
     try {
       final value = jsonDecode(raw);
-      if (value is Map && value['data'] != null)
+      if (value is Map && value['data'] != null) {
         return {'saved_at': value['saved_at'], 'data': value['data']};
+      }
     } catch (_) {}
     return null;
   }
@@ -117,7 +118,8 @@ class LocalStore {
       final item = Map<String, dynamic>.from(jsonDecode(raw));
       final attempts = (item['attempts'] as num?)?.toInt() ?? 0;
       final nextAttempts = attempts + 1;
-      final delaySeconds = (20 * (1 << (nextAttempts - 1))).clamp(20, 3600).toInt();
+      final delaySeconds =
+          (20 * (1 << (nextAttempts - 1))).clamp(20, 3600).toInt();
       item['attempts'] = nextAttempts;
       item['status'] = 'failed';
       item['last_status_code'] = statusCode;
@@ -188,8 +190,9 @@ class LocalStore {
       } else if (data is Map && data['data'] is List) {
         final list =
             (data['data'] as List).map((item) {
-              if (item is Map && endpoint.endsWith('/${item['id']}'))
+              if (item is Map && endpoint.endsWith('/${item['id']}')) {
                 return {...Map<String, dynamic>.from(item), ...patch};
+              }
               return item;
             }).toList();
         await writeCache(keyString, {
@@ -199,8 +202,9 @@ class LocalStore {
       } else if (data is List) {
         final list =
             data.map((item) {
-              if (item is Map && endpoint.endsWith('/${item['id']}'))
+              if (item is Map && endpoint.endsWith('/${item['id']}')) {
                 return {...Map<String, dynamic>.from(item), ...patch};
+              }
               return item;
             }).toList();
         await writeCache(keyString, list);
