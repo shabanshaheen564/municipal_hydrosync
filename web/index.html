@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
@@ -10,8 +10,27 @@
   <meta name="apple-mobile-web-app-title" content="Municipal HydroSync">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png">
-  <title>Municipal HydroSync</title>
   <link rel="manifest" href="manifest.json">
+  <title>Municipal HydroSync</title>
+  <style>
+    @font-face {
+      font-family: 'Tajawal';
+      src: url('assets/fonts/tajawal-arabic-400-normal.woff2') format('woff2');
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Tajawal';
+      src: url('assets/fonts/tajawal-latin-400-normal.woff2') format('woff2');
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+    html, body {
+      font-family: 'Tajawal', sans-serif;
+    }
+  </style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
