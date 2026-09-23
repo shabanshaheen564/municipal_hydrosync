@@ -6,11 +6,13 @@ import '../widgets/common_widgets.dart';
 import '../mobile_management.dart';
 import '../mobile_screens.dart';
 import '../connectivity.dart';
+import '../sync_service.dart';
 
 class WorkOrdersScreen extends StatefulWidget {
   final ApiClient api;
+  final SyncService syncService;
 
-  const WorkOrdersScreen({super.key, required this.api});
+  const WorkOrdersScreen({super.key, required this.api, required this.syncService});
 
   @override
   State<WorkOrdersScreen> createState() => _WorkOrdersScreenState();
@@ -60,6 +62,10 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
 
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: SyncStatusPanel(syncService: widget.syncService, onRefresh: load),
+        ),
         // Offline message
         ValueListenableBuilder(
           valueListenable: connectivity.isOnline,
