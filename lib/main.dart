@@ -3,8 +3,16 @@ import 'api.dart';
 import 'models.dart';
 import 'mobile_screens.dart';
 import 'mobile_management.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'local_store.dart';
+import 'sync_service.dart';
 
-void main() => runApp(const HydroSyncApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await LocalStore.init();
+  runApp(const HydroSyncApp());
+}
 
 class HydroSyncApp extends StatefulWidget {
   const HydroSyncApp({super.key});
@@ -178,6 +186,7 @@ class _HomePageState extends State<HomePage> {
   int tab = 0;
   int pending = 0;
   late final List<Widget> pages;
+  late final SyncService syncService;
 
   @override
   void initState() {
@@ -189,17 +198,27 @@ class _HomePageState extends State<HomePage> {
       MapPage(api: widget.api),
       ProfilePage(user: widget.user, api: widget.api, onLogout: widget.onLogout),
     ];
-    sync();
+    syncService = SyncService(widget.api);
+    syncService.pending.addListener(_syncChanged);
+    syncService.start();
+  }
+
+  void _syncChanged() {
+    if (mounted) setState(() => pending = syncService.pending.value);
   }
 
   Future<void> sync() async {
-    try {
-      final n = await widget.api.syncPending();
-      final c = await widget.api.pendingCount();
-      if (!mounted) return;
-      setState(() => pending = c);
-      if (n > 0) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تمت مزامنة $n عملية بنجاح')));
-    } catch (_) {}
+    final n = await syncService.syncNow();
+    if (!mounted) return;
+    setState(() => pending = syncService.pending.value);
+    if (n > 0) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تمت مزامنة $n عملية بنجاح')));
+  }
+
+  @override
+  void dispose() {
+    syncService.pending.removeListener(_syncChanged);
+    syncService.dispose();
+    super.dispose();
   }
 
   @override
