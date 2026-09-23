@@ -172,12 +172,12 @@ class LocalStore {
     String user,
     String endpoint,
     Map<String, dynamic> body,
-    String queueId,
-  ) async {
-    final localId = -DateTime.now().microsecondsSinceEpoch;
+    String queueId, {
+    int? localId,
+  }) async {
     final record = {
       ...body,
-      'id': localId,
+      'id': localId ?? -DateTime.now().microsecondsSinceEpoch,
       'queued': true,
       'local_pending': true,
       'local_queue_id': queueId,
