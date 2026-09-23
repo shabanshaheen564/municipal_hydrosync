@@ -267,14 +267,16 @@ class _HomePageState extends State<HomePage> {
     connectivity = ConnectivityService();
     connectivity.init();
 
+    syncService = SyncService(widget.api);
     pages = [
       DashboardScreen(
         api: widget.api,
         user: widget.user,
+        syncService: syncService,
         onOpenTab: (i) => setState(() => tab = i),
       ),
-      ComplaintsScreen(api: widget.api),
-      WorkOrdersScreen(api: widget.api),
+      ComplaintsScreen(api: widget.api, syncService: syncService),
+      WorkOrdersScreen(api: widget.api, syncService: syncService),
       MapScreen(api: widget.api),
       ProfileScreen(
         user: widget.user,
@@ -282,7 +284,6 @@ class _HomePageState extends State<HomePage> {
         onLogout: widget.onLogout,
       ),
     ];
-    syncService = SyncService(widget.api);
     syncService.pending.addListener(_syncChanged);
     connectivity.isOnline.addListener(_connectivityChanged);
     syncService.start();
