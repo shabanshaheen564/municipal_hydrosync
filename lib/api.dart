@@ -204,7 +204,7 @@ class ApiClient {
           a['body'] is Map) {
         result.add({
           ...Map<String, dynamic>.from(a['body']),
-          'id': -(a['id'].hashCode.abs() + 1),
+          'id': (a['local_id'] as num?)?.toInt() ?? -(a['id'].hashCode.abs() + 1),
           'queued': true,
           'local_pending': true,
           'local_queue_id': a['id'],
