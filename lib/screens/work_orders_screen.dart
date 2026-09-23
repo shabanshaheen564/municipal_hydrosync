@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
+import '../models.dart';
 import '../utils.dart';
 import '../widgets/common_widgets.dart';
 import '../mobile_management.dart';
@@ -94,24 +95,24 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
                       ),
                       items: [
                         const DropdownMenuItem(
-                          child: Text('الكل'),
                           value: null,
+                          child: Text('الكل'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'pending'),
                           value: 'pending',
+                          child: StatusBadge(status: 'pending'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'assigned'),
                           value: 'assigned',
+                          child: StatusBadge(status: 'assigned'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'in_progress'),
                           value: 'in_progress',
+                          child: StatusBadge(status: 'in_progress'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'completed'),
                           value: 'completed',
+                          child: StatusBadge(status: 'completed'),
                         ),
                       ],
                       onChanged:
@@ -131,24 +132,24 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
                       ),
                       items: [
                         const DropdownMenuItem(
-                          child: Text('الكل'),
                           value: null,
+                          child: Text('الكل'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'low'),
                           value: 'low',
+                          child: PriorityBadge(priority: 'low'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'medium'),
                           value: 'medium',
+                          child: PriorityBadge(priority: 'medium'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'high'),
                           value: 'high',
+                          child: PriorityBadge(priority: 'high'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'urgent'),
                           value: 'urgent',
+                          child: PriorityBadge(priority: 'urgent'),
                         ),
                       ],
                       onChanged:
