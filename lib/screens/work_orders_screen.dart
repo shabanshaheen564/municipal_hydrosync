@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../models.dart';
-import '../utils.dart';
 import '../widgets/common_widgets.dart';
 import '../mobile_management.dart';
 import '../mobile_screens.dart';
@@ -307,6 +306,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
       );
       if (changed == true && mounted) load();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
