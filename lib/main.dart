@@ -32,7 +32,8 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: scheme,
-        fontFamilyFallback: const ['Arial', 'Tahoma', 'Noto Sans Arabic', 'sans-serif'],
+        fontFamily: 'NotoSansArabic',
+        fontFamilyFallback: const ['Arial', 'Tahoma', 'sans-serif'],
         scaffoldBackgroundColor: const Color(0xFFF5F7FA),
         visualDensity: VisualDensity.adaptivePlatformDensity,
         appBarTheme: const AppBarTheme(
