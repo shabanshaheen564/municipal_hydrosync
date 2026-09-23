@@ -87,6 +87,16 @@ class LocalStore {
     return result;
   }
 
+  static Map<String, dynamic>? queueItem(String id) {
+    final raw = _queue.get(id);
+    if (raw is! String) return null;
+    try {
+      return Map<String, dynamic>.from(jsonDecode(raw));
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<void> removeQueueItem(String id) => _queue.delete(id);
 
   static Future<void> markQueueFailure(
