@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../models.dart';
 import '../widgets/common_widgets.dart';
+import '../sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final ApiClient api;
   final SessionUser user;
   final ValueChanged<int> onOpenTab;
+  final SyncService syncService;
 
   const DashboardScreen({
     super.key,
     required this.api,
     required this.user,
     required this.onOpenTab,
+    required this.syncService,
   });
 
   @override
@@ -85,7 +88,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
         children: [
           _buildGreetingCard(context),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          SyncStatusPanel(syncService: widget.syncService, onRefresh: load),
+          const SizedBox(height: 12),
           _buildSectionTitle('ملخص العمليات'),
           const SizedBox(height: 12),
           Wrap(
