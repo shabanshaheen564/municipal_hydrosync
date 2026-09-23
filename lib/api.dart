@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
 import 'models.dart';
+import 'local_store.dart';
 
 class ApiException implements Exception {
   final int status;
@@ -15,11 +16,8 @@ class ApiException implements Exception {
 class ApiClient {
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
-  static const _pendingKey = 'pending_actions';
-
   final String baseUrl;
   ApiClient({this.baseUrl = AppConfig.apiBaseUrl});
-
   Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
 
   Future<Map<String, String>> _headers() async {
@@ -31,6 +29,19 @@ class ApiClient {
       if (t != null) 'Authorization': 'Bearer $t',
     };
   }
+
+  Future<String> _userCacheId() async {
+    final raw = (await _prefs).getString(_userKey);
+    if (raw == null) return 'anonymous';
+    try {
+      return '${jsonDecode(raw)['id'] ?? 'anonymous'}';
+    } catch (_) {
+      return 'anonymous';
+    }
+  }
+
+  Future<String> _cacheKey(String path, Map<String, String>? query) async =>
+      LocalStore.cacheKey(await _userCacheId(), path, query);
 
   Future<dynamic> _send(
     String method,
@@ -47,22 +58,38 @@ class ApiClient {
           r = await http.get(uri, headers: h).timeout(AppConfig.requestTimeout);
           break;
         case 'POST':
-          r = await http.post(uri, headers: h, body: body == null ? null : jsonEncode(body)).timeout(AppConfig.requestTimeout);
+          r = await http
+              .post(
+                uri,
+                headers: h,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(AppConfig.requestTimeout);
           break;
         case 'PUT':
-          r = await http.put(uri, headers: h, body: body == null ? null : jsonEncode(body)).timeout(AppConfig.requestTimeout);
+          r = await http
+              .put(
+                uri,
+                headers: h,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(AppConfig.requestTimeout);
           break;
         case 'DELETE':
-          r = await http.delete(uri, headers: h).timeout(AppConfig.requestTimeout);
+          r = await http
+              .delete(uri, headers: h)
+              .timeout(AppConfig.requestTimeout);
           break;
         default:
           throw const ApiException(0, 'طريقة طلب غير مدعومة.');
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw const ApiException(0, 'تعذر الاتصال بالخادم. تحقق من الإنترنت أو عنوان API.');
+      throw const ApiException(
+        0,
+        'تعذر الاتصال بالخادم. تحقق من الإنترنت أو عنوان API.',
+      );
     }
-
     dynamic d;
     try {
       d = jsonDecode(r.body);
@@ -70,25 +97,31 @@ class ApiClient {
       d = r.body;
     }
     if (r.statusCode < 200 || r.statusCode >= 300) {
-      final message = d is Map
-          ? '${d['message'] ?? d['error'] ?? 'حدث خطأ في الخادم'}'
-          : 'حدث خطأ في الخادم';
+      final message =
+          d is Map
+              ? '${d['message'] ?? d['error'] ?? 'حدث خطأ في الخادم'}'
+              : 'حدث خطأ في الخادم';
       throw ApiException(r.statusCode, message);
     }
     return d;
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final d = Map<String, dynamic>.from(await _send('POST', '/login', body: {
-      'email': email,
-      'password': password,
-    }));
+    final d = Map<String, dynamic>.from(
+      await _send(
+        'POST',
+        '/login',
+        body: {'email': email, 'password': password},
+      ),
+    );
     final p = await _prefs;
     await p.setString(_tokenKey, '${d['token']}');
     await p.setString(_userKey, jsonEncode(d['user']));
     return d;
   }
 
+  Future<void> clearLocalCache() async =>
+      LocalStore.clearUserCache(await _userCacheId());
   Future<void> logout() async {
     try {
       await _send('POST', '/logout');
@@ -96,54 +129,195 @@ class ApiClient {
     final p = await _prefs;
     await p.remove(_tokenKey);
     await p.remove(_userKey);
+    await LocalStore.clearCache();
   }
 
-  Future<bool> isLoggedIn() async => (await _prefs).getString(_tokenKey) != null;
-
+  Future<bool> isLoggedIn() async =>
+      (await _prefs).getString(_tokenKey) != null;
   Future<SessionUser?> session() async {
     final raw = (await _prefs).getString(_userKey);
     return raw == null ? null : SessionUser.fromJson(jsonDecode(raw));
   }
 
-  Future<Map<String, dynamic>> summary() async => Map<String, dynamic>.from(await _send('GET', '/reports/summary'));
-
-  Future<Map<String, dynamic>> operationalMap() async => Map<String, dynamic>.from(await _send('GET', '/map/operational'));
-
-  Future<ApiList> list(String endpoint, {Map<String, String>? query}) async {
-    final d = await _send('GET', endpoint, query: query);
-    final raw = d is List
-        ? d
-        : d is Map && d['data'] is List
-            ? d['data']
-            : d is Map && d['items'] is List
-                ? d['items']
-                : <dynamic>[];
-    final items = (raw as List).map((e) => Map<String, dynamic>.from(e)).toList();
-    final total = d is Map && d['meta'] is Map && d['meta']['total'] is num
-        ? (d['meta']['total'] as num).toInt()
-        : items.length;
-    return ApiList(items, total);
+  Future<Map<String, dynamic>> _cachedMap(
+    String path,
+    Map<String, String>? query,
+  ) async {
+    final c = LocalStore.readCache(await _cacheKey(path, query));
+    if (c?['data'] is Map) return Map<String, dynamic>.from(c!['data']);
+    throw const ApiException(0, 'لا توجد بيانات محلية محفوظة بعد.');
   }
 
-  Future<Map<String, dynamic>> getOne(String endpoint) async => Map<String, dynamic>.from(await _send('GET', endpoint));
-
-  Future<ApiList> users() async => list('/users', query: {'per_page': '100'});
-
-  Future<Map<String, dynamic>> create(String endpoint, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _readMap(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    final key = await _cacheKey(path, query);
+    final cached = LocalStore.readCache(key);
+    if (cached?['data'] is Map) {
+      _refreshMap(key, path, query);
+      return Map<String, dynamic>.from(cached!['data']);
+    }
     try {
-      return Map<String, dynamic>.from(await _send('POST', endpoint, body: body));
+      final d = await _send('GET', path, query: query);
+      await LocalStore.writeCache(key, d);
+      return Map<String, dynamic>.from(d);
     } on ApiException catch (e) {
       if (e.status != 0) rethrow;
-      final p = await _prefs;
-      final q = p.getStringList(_pendingKey) ?? [];
-      q.add(jsonEncode({'method': 'POST', 'endpoint': endpoint, 'body': body}));
-      await p.setStringList(_pendingKey, q);
-      return {'queued': true};
+      return _cachedMap(path, query);
     }
   }
 
-  Future<Map<String, dynamic>> update(String endpoint, Map<String, dynamic> body) async =>
-      Map<String, dynamic>.from(await _send('PUT', endpoint, body: body));
+  Future<void> _refreshMap(
+    String key,
+    String path,
+    Map<String, String>? query,
+  ) async {
+    try {
+      final d = await _send('GET', path, query: query);
+      await LocalStore.writeCache(key, d);
+    } catch (_) {}
+  }
+
+  Future<Map<String, dynamic>> summary() => _readMap('/reports/summary');
+  Future<Map<String, dynamic>> operationalMap() => _readMap('/map/operational');
+
+  Future<List<Map<String, dynamic>>> _pendingCreates(String endpoint) async {
+    final result = <Map<String, dynamic>>[];
+    for (final a in LocalStore.queueItems()) {
+      if (a['method'] == 'POST' &&
+          a['endpoint'] == endpoint &&
+          a['body'] is Map) {
+        result.add({
+          ...Map<String, dynamic>.from(a['body']),
+          'id': -(a['id'].hashCode.abs() + 1),
+          'queued': true,
+          'local_pending': true,
+          'local_queue_id': a['id'],
+        });
+      }
+    }
+    return result.reversed.toList();
+  }
+
+  Future<ApiList> list(String endpoint, {Map<String, String>? query}) async {
+    final key = await _cacheKey(endpoint, query);
+    dynamic d;
+    final cached = LocalStore.readCache(key);
+    if (cached != null) {
+      d = cached['data'];
+      // Background refresh without blocking UI
+      _refreshList(key, endpoint, query);
+    } else {
+      try {
+        d = await _send('GET', endpoint, query: query);
+        await LocalStore.writeCache(key, d);
+      } on ApiException catch (e) {
+        if (e.status != 0) rethrow;
+        throw const ApiException(
+          0,
+          'لا توجد بيانات محلية. افتح التطبيق مرة واحدة مع الإنترنت لمزامنة البيانات.',
+        );
+      }
+    }
+    final raw =
+        d is List
+            ? d
+            : d is Map && d['data'] is List
+            ? d['data']
+            : d is Map && d['items'] is List
+            ? d['items']
+            : <dynamic>[];
+    final items =
+        (raw as List).map((e) => Map<String, dynamic>.from(e)).toList();
+    final pending = await _pendingCreates(endpoint);
+    if (pending.isNotEmpty) items.insertAll(0, pending);
+    final total =
+        d is Map && d['meta'] is Map && d['meta']['total'] is num
+            ? (d['meta']['total'] as num).toInt()
+            : items.length;
+    return ApiList(items, total);
+  }
+
+  Future<void> _refreshList(
+    String key,
+    String endpoint,
+    Map<String, String>? query,
+  ) async {
+    try {
+      final d = await _send('GET', endpoint, query: query);
+      await LocalStore.writeCache(key, d);
+    } catch (_) {}
+  }
+
+  Future<Map<String, dynamic>> getOne(String endpoint) async {
+    final key = await _cacheKey(endpoint, null);
+    final cached = LocalStore.readCache(key);
+    if (cached != null) {
+      _refreshOne(key, endpoint);
+      return Map<String, dynamic>.from(cached['data']);
+    }
+    try {
+      final d = await _send('GET', endpoint);
+      await LocalStore.writeCache(key, d);
+      return Map<String, dynamic>.from(d);
+    } on ApiException catch (e) {
+      if (e.status != 0) rethrow;
+      throw const ApiException(0, 'لا توجد نسخة محلية من هذه البيانات.');
+    }
+  }
+
+  Future<void> _refreshOne(String key, String endpoint) async {
+    try {
+      final d = await _send('GET', endpoint);
+      await LocalStore.writeCache(key, d);
+    } catch (_) {}
+  }
+
+  Future<ApiList> users() async => list('/users', query: {'per_page': '100'});
+
+  Future<Map<String, dynamic>> create(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final result = Map<String, dynamic>.from(
+        await _send('POST', endpoint, body: body),
+      );
+      await LocalStore.clearCache();
+      return result;
+    } on ApiException catch (e) {
+      if (e.status != 0) rethrow;
+      final user = await _userCacheId();
+      final qid = LocalStore.enqueue('POST', endpoint, body);
+      await LocalStore.addPendingRecord(user, endpoint, body, qid);
+      return {'queued': true, 'local_queue_id': qid};
+    }
+  }
+
+  Future<Map<String, dynamic>> update(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final result = Map<String, dynamic>.from(
+        await _send('PUT', endpoint, body: body),
+      );
+      await LocalStore.clearCache();
+      return result;
+    } on ApiException catch (e) {
+      if (e.status != 0) rethrow;
+      final user = await _userCacheId();
+      final qid = LocalStore.enqueue('PUT', endpoint, body);
+      await LocalStore.patchEndpoint(user, endpoint, {
+        ...body,
+        'queued': true,
+        'local_pending': true,
+        'local_queue_id': qid,
+      });
+      return {'queued': true, 'local_queue_id': qid};
+    }
+  }
 
   Future<Map<String, dynamic>> convertComplaint(
     int complaintId, {
@@ -152,36 +326,90 @@ class ApiClient {
     required String priority,
     required int assignedTo,
     String? notes,
-  }) async => Map<String, dynamic>.from(await _send('POST', '/complaints/$complaintId/convert-to-work-order', body: {
-        'title': title,
-        'description': description,
-        'priority': priority,
-        'assigned_to': assignedTo,
-        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
-      }));
+  }) async {
+    final body = <String, dynamic>{
+      'title': title,
+      'description': description,
+      'priority': priority,
+      'assigned_to': assignedTo,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+    };
+    try {
+      final r = Map<String, dynamic>.from(
+        await _send(
+          'POST',
+          '/complaints/$complaintId/convert-to-work-order',
+          body: body,
+        ),
+      );
+      await LocalStore.clearCache();
+      return r;
+    } on ApiException catch (e) {
+      if (e.status != 0) rethrow;
+      final qid = LocalStore.enqueue(
+        'POST',
+        '/complaints/$complaintId/convert-to-work-order',
+        body,
+      );
+      return {'queued': true, 'local_queue_id': qid};
+    }
+  }
 
-  Future<Map<String, dynamic>> addComplaintToWorkOrder(int complaintId, int workOrderId) async =>
-      Map<String, dynamic>.from(await _send('POST', '/complaints/$complaintId/add-to-work-order', body: {
-        'work_order_id': workOrderId,
-      }));
+  Future<Map<String, dynamic>> addComplaintToWorkOrder(
+    int complaintId,
+    int workOrderId,
+  ) async {
+    final body = {'work_order_id': workOrderId};
+    try {
+      final r = Map<String, dynamic>.from(
+        await _send(
+          'POST',
+          '/complaints/$complaintId/add-to-work-order',
+          body: body,
+        ),
+      );
+      await LocalStore.clearCache();
+      return r;
+    } on ApiException catch (e) {
+      if (e.status != 0) rethrow;
+      final qid = LocalStore.enqueue(
+        'POST',
+        '/complaints/$complaintId/add-to-work-order',
+        body,
+      );
+      return {'queued': true, 'local_queue_id': qid};
+    }
+  }
 
-  Future<int> pendingCount() async => (await _prefs).getStringList(_pendingKey)?.length ?? 0;
+  Future<int> pendingCount() async => LocalStore.pendingCount;
+  Future<DateTime?> lastSyncAt() async => LocalStore.lastSyncAt;
 
   Future<int> syncPending() async {
-    final p = await _prefs;
-    final old = p.getStringList(_pendingKey) ?? [];
-    final keep = <String>[];
+    final items = LocalStore.queueItems();
+    if (items.isEmpty) return 0;
     var done = 0;
-    for (final raw in old) {
-      final a = jsonDecode(raw);
+
+    for (final a in items) {
       try {
-        await _send(a['method'], a['endpoint'], body: a['body']);
+        await _send('${a['method']}', '${a['endpoint']}', body: a['body']);
+        await LocalStore.removeQueueItem('${a['id']}');
         done++;
+      } on ApiException catch (e) {
+        // Only stop on network errors (status 0)
+        if (e.status == 0) break;
+        // Remove failed items to prevent infinite retry
+        await LocalStore.removeQueueItem('${a['id']}');
       } catch (_) {
-        keep.add(raw);
+        // Network or unknown error, stop processing
+        break;
       }
     }
-    await p.setStringList(_pendingKey, keep);
+
+    if (done > 0) {
+      await LocalStore.clearCache();
+      await LocalStore.setLastSyncNow();
+    }
+
     return done;
   }
 }
