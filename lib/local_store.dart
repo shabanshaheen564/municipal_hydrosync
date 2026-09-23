@@ -53,8 +53,9 @@ class LocalStore {
   static String enqueue(
     String method,
     String endpoint,
-    Map<String, dynamic>? body,
-  ) {
+    Map<String, dynamic>? body, {
+    int? localId,
+  }) {
     final id = '${DateTime.now().microsecondsSinceEpoch}-${_queue.length}';
     _queue.put(
       id,
