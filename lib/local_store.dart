@@ -97,6 +97,13 @@ class LocalStore {
     }
   }
 
+  static Future<void> updateQueueItem(
+    String id,
+    Map<String, dynamic> item,
+  ) async {
+    await _queue.put(id, jsonEncode(item));
+  }
+
   static Future<void> removeQueueItem(String id) => _queue.delete(id);
 
   static Future<void> markQueueFailure(
