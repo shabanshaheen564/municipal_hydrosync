@@ -48,7 +48,7 @@ class StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     decoration: BoxDecoration(
-      color: statusColor(status).withOpacity(0.15),
+      color: statusColor(status).withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(8),
       border: Border.all(color: statusColor(status), width: 0.5),
     ),
@@ -80,7 +80,7 @@ class PriorityBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     decoration: BoxDecoration(
-      color: priorityColor(priority).withOpacity(0.15),
+      color: priorityColor(priority).withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(8),
       border: Border.all(color: priorityColor(priority), width: 0.5),
     ),
@@ -124,7 +124,7 @@ class MetricCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                backgroundColor: color.withOpacity(0.15),
+                backgroundColor: color.withValues(alpha: 0.15),
                 child: Icon(icon, color: color),
               ),
               const SizedBox(height: 10),
@@ -198,8 +198,8 @@ class OfflineIndicator extends StatelessWidget {
     decoration: BoxDecoration(
       color:
           isOnline
-              ? Colors.green.withOpacity(0.1)
-              : Colors.orange.withOpacity(0.1),
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.orange.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
       border: Border.all(
         color: isOnline ? Colors.green : Colors.orange,
@@ -243,7 +243,7 @@ class PendingSyncBadge extends StatelessWidget {
           : Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.15),
+              color: Colors.blue.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.blue, width: 0.5),
             ),
@@ -281,7 +281,7 @@ class OfflineMessageBar extends StatelessWidget {
           ? Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             child: Row(
               children: [
                 const Icon(Icons.cloud_off, size: 18, color: Colors.orange),
@@ -360,7 +360,7 @@ class SyncStatusPanel extends StatelessWidget {
               ),
               if (syncService.failed.value > 0) ...[
                 const SizedBox(height: 8),
-                Text('العمليات الفاشلة: ' + syncService.failed.value.toString(),
+                Text('العمليات الفاشلة: ${syncService.failed.value}',
                     style: const TextStyle(fontSize: 12)),
                 if (syncService.lastError.value != null) ...[
                   const SizedBox(height: 4),
@@ -402,7 +402,7 @@ class SyncStatusPanel extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    'آخر مزامنة: ' + syncService.lastSync.value.toString(),
+                    'آخر مزامنة: ${syncService.lastSync.value}',
                     style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ),
