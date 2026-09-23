@@ -261,22 +261,6 @@ class _ComplaintFormState extends State<ComplaintForm> {
     }
   }
 
-  Future<void> gps() async {
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) throw Exception('خدمة الموقع غير مفعلة.');
-      var p = await Geolocator.checkPermission();
-      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
-      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) throw Exception('لم يتم السماح بالموقع.');
-      final x = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
-      if (mounted) setState(() { lat.text = x.latitude.toStringAsFixed(7); lng.text = x.longitude.toStringAsFixed(7); });
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'))); }
-  }
-
-  Future<void> pick() async {
-    final p = await Navigator.push<LatLng>(context, MaterialPageRoute(builder: (_) => const LocationPickerPage()));
-    if (p != null && mounted) setState(() { lat.text = p.latitude.toStringAsFixed(7); lng.text = p.longitude.toStringAsFixed(7); });
-  }
-
   Future<void> save() async {
     if (title.text.trim().isEmpty || description.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -475,6 +459,22 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
     lat.dispose();
     lng.dispose();
     super.dispose();
+  }
+
+  Future<void> gps() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) throw Exception('خدمة الموقع غير مفعلة.');
+      var p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) throw Exception('لم يتم السماح بالموقع.');
+      final x = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+      if (mounted) setState(() { lat.text = x.latitude.toStringAsFixed(7); lng.text = x.longitude.toStringAsFixed(7); });
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'))); }
+  }
+
+  Future<void> pick() async {
+    final p = await Navigator.push<LatLng>(context, MaterialPageRoute(builder: (_) => const LocationPickerPage()));
+    if (p != null && mounted) setState(() { lat.text = p.latitude.toStringAsFixed(7); lng.text = p.longitude.toStringAsFixed(7); });
   }
 
   Future<void> save() async {
