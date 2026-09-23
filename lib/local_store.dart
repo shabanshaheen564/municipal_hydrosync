@@ -130,6 +130,35 @@ class LocalStore {
   }
 
   static int get pendingCount => _queue.length;
+
+  static int get failedCount => queueItems().where((item) => item['status'] == 'failed').length;
+
+  static String? get lastQueueError {
+    String? latest;
+    DateTime? latestAt;
+    for (final item in queueItems()) {
+      if (item['status'] != 'failed') continue;
+      final at = DateTime.tryParse('${item['last_attempt_at']}');
+      if (latestAt == null || (at != null && at.isAfter(latestAt))) {
+        latestAt = at;
+        latest = '${item['last_error'] ?? ''}'.trim();
+      }
+    }
+    return latest?.isEmpty == true ? null : latest;
+  }
+
+  static Future<int> retryFailed() async {
+    var changed = 0;
+    for (final item in queueItems()) {
+      if (item['status'] != 'failed') continue;
+      final id = '${item['id']}';
+      item['status'] = 'pending';
+      item['next_retry_at'] = null;
+      await _queue.put(id, jsonEncode(item));
+      changed++;
+    }
+    return changed;
+  }
   static DateTime? get lastSyncAt {
     final raw = _meta.get('last_sync_at');
     return raw is String ? DateTime.tryParse(raw) : null;
