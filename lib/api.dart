@@ -434,15 +434,15 @@ class ApiClient {
 
     var done = 0;
     for (final queued in snapshot) {
-      final queueId = '\${queued['id']}';
+      final queueId = '${queued['id']}';
       final item = LocalStore.queueItem(queueId);
       if (item == null) continue;
 
-      final nextRetry = DateTime.tryParse('\${item['next_retry_at']}');
+      final nextRetry = DateTime.tryParse('${item['next_retry_at']}');
       if (nextRetry != null && nextRetry.isAfter(DateTime.now())) continue;
 
-      final method = '\${item['method']}';
-      final endpoint = '\${item['endpoint']}';
+      final method = '${item['method']}';
+      final endpoint = '${item['endpoint']}';
       var body =
           item['body'] is Map
               ? Map<String, dynamic>.from(item['body'])
