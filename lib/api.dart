@@ -308,18 +308,34 @@ class ApiClient {
     String endpoint,
     Map<String, dynamic> body,
   ) async {
+    final payload = {
+      ...body,
+      'idempotency_key': body['idempotency_key'] ?? _newIdempotencyKey(),
+    };
+
     try {
       final result = Map<String, dynamic>.from(
-        await _send('POST', endpoint, body: body),
+        await _send('POST', endpoint, body: payload),
       );
       await LocalStore.clearCache();
       return result;
     } on ApiException catch (e) {
       if (e.status != 0) rethrow;
       final user = await _userCacheId();
-      final qid = LocalStore.enqueue('POST', endpoint, body);
-      await LocalStore.addPendingRecord(user, endpoint, body, qid);
-      return {'queued': true, 'local_queue_id': qid};
+      final localId = -DateTime.now().microsecondsSinceEpoch;
+      final qid = LocalStore.enqueue('POST', endpoint, payload, localId: localId);
+      await LocalStore.addPendingRecord(
+        user,
+        endpoint,
+        payload,
+        qid,
+        localId: localId,
+      );
+      return {
+        'queued': true,
+        'local_queue_id': qid,
+        'local_id': localId,
+      };
     }
   }
 
