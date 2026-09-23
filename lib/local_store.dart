@@ -64,6 +64,7 @@ class LocalStore {
         'method': method,
         'endpoint': endpoint,
         'body': body,
+        'local_id': localId,
         'created_at': DateTime.now().toIso8601String(),
         'attempts': 0,
         'status': 'pending',
