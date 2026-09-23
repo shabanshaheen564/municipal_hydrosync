@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils.dart';
+import '../sync_service.dart';
 
 class InfoCard extends StatelessWidget {
   final Map<String, String> rows;
@@ -300,4 +301,115 @@ class OfflineMessageBar extends StatelessWidget {
             ),
           )
           : const SizedBox.shrink();
+}
+
+
+class SyncStatusPanel extends StatelessWidget {
+  final SyncService syncService;
+  final VoidCallback? onRefresh;
+
+  const SyncStatusPanel({
+    super.key,
+    required this.syncService,
+    this.onRefresh,
+  });
+
+  String _stateLabel(SyncState state) {
+    switch (state) {
+      case SyncState.syncing: return 'جاري المزامنة...';
+      case SyncState.offline: return 'بانتظار الاتصال';
+      case SyncState.error: return 'توجد عمليات فاشلة';
+      case SyncState.idle: return 'المزامنة محدثة';
+    }
+  }
+
+  IconData _stateIcon(SyncState state) {
+    switch (state) {
+      case SyncState.syncing: return Icons.sync;
+      case SyncState.offline: return Icons.cloud_off;
+      case SyncState.error: return Icons.error_outline;
+      case SyncState.idle: return Icons.cloud_done_outlined;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<int>(
+    valueListenable: syncService.revision,
+    builder: (_, __, ___) => ValueListenableBuilder<SyncState>(
+      valueListenable: syncService.state,
+      builder: (_, state, __) => Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(_stateIcon(state)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _stateLabel(state),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  if (syncService.pending.value > 0)
+                    PendingSyncBadge(count: syncService.pending.value),
+                ],
+              ),
+              if (syncService.failed.value > 0) ...[
+                const SizedBox(height: 8),
+                Text('العمليات الفاشلة: ' + syncService.failed.value.toString(),
+                    style: const TextStyle(fontSize: 12)),
+                if (syncService.lastError.value != null) ...[
+                  const SizedBox(height: 4),
+                  Text(syncService.lastError.value!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: Colors.red)),
+                ],
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: state == SyncState.syncing ? null : () async {
+                        await syncService.syncNow();
+                        onRefresh?.call();
+                      },
+                      icon: const Icon(Icons.sync),
+                      label: const Text('مزامنة الآن'),
+                    ),
+                  ),
+                  if (syncService.failed.value > 0) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: state == SyncState.syncing ? null : () async {
+                          await syncService.retryFailed();
+                          onRefresh?.call();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('إعادة المحاولة'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (syncService.lastSync.value != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'آخر مزامنة: ' + syncService.lastSync.value.toString(),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
