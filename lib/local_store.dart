@@ -117,7 +117,7 @@ class LocalStore {
       final item = Map<String, dynamic>.from(jsonDecode(raw));
       final attempts = (item['attempts'] as num?)?.toInt() ?? 0;
       final nextAttempts = attempts + 1;
-      final delaySeconds = (20 * (1 << (nextAttempts - 1))).clamp(20, 3600);
+      final delaySeconds = (20 * (1 << (nextAttempts - 1))).clamp(20, 3600).toInt();
       item['attempts'] = nextAttempts;
       item['status'] = 'failed';
       item['last_status_code'] = statusCode;
