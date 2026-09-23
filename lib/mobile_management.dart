@@ -43,7 +43,7 @@ class _ManagedListPageState extends State<ManagedListPage> {
         final m = items[i]; final n = widget.complaints ? m['complaint_number'] : m['work_order_number'];
         return Card(margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: ListTile(leading: CircleAvatar(child: Icon(widget.complaints ? Icons.report_problem : Icons.engineering)), title: Text('${n ?? '-'} — ${m['title'] ?? ''}', maxLines: 2, overflow: TextOverflow.ellipsis), subtitle: Text('${statusLabel('${m['status'] ?? ''}')} • ${priorityLabel('${m['priority'] ?? ''}')}\n${m['description'] ?? ''}', maxLines: 3, overflow: TextOverflow.ellipsis), trailing: const Icon(Icons.chevron_left), onTap: () => details(m)));
       }))),
-      Padding(padding: const EdgeInsets.all(10), child: SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: create, icon: const Icon(Icons.add), label: Text(widget.complaints ? 'تسجيل شكوى جديدة' : 'إنشاء مهمة ميدانية'))),
+      Padding(padding: const EdgeInsets.all(10), child: SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: create, icon: const Icon(Icons.add), label: Text(widget.complaints ? 'تسجيل شكوى جديدة' : 'إنشاء مهمة ميدانية')))),
     ]);
   }
 }
