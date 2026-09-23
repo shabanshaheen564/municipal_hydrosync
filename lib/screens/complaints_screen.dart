@@ -95,20 +95,20 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                       ),
                       items: [
                         const DropdownMenuItem(
-                          child: Text('الكل'),
                           value: null,
+                          child: Text('الكل'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'open'),
                           value: 'open',
+                          child: StatusBadge(status: 'open'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'in_progress'),
                           value: 'in_progress',
+                          child: StatusBadge(status: 'in_progress'),
                         ),
                         DropdownMenuItem(
-                          child: StatusBadge(status: 'resolved'),
                           value: 'resolved',
+                          child: StatusBadge(status: 'resolved'),
                         ),
                       ],
                       onChanged:
@@ -128,24 +128,24 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                       ),
                       items: [
                         const DropdownMenuItem(
-                          child: Text('الكل'),
                           value: null,
+                          child: Text('الكل'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'low'),
                           value: 'low',
+                          child: PriorityBadge(priority: 'low'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'medium'),
                           value: 'medium',
+                          child: PriorityBadge(priority: 'medium'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'high'),
                           value: 'high',
+                          child: PriorityBadge(priority: 'high'),
                         ),
                         DropdownMenuItem(
-                          child: PriorityBadge(priority: 'urgent'),
                           value: 'urgent',
+                          child: PriorityBadge(priority: 'urgent'),
                         ),
                       ],
                       onChanged:

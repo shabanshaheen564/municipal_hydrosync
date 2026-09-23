@@ -62,10 +62,11 @@ class _ListPageState extends State<ListPage> {
       final x = await widget.api.list(widget.endpoint, query: q);
       if (mounted) setState(() => data = x);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$e')));
+      }
     }
     if (mounted) setState(() => loading = false);
   }
@@ -208,36 +209,42 @@ class _ComplaintFormState extends State<ComplaintForm> {
   bool busy = false;
   @override
   void dispose() {
-    for (final x in [title, description, name, phone, address, lat, lng])
+    for (final x in [title, description, name, phone, address, lat, lng]) {
       x.dispose();
+    }
     super.dispose();
   }
 
   Future<void> gps() async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled())
+      if (!await Geolocator.isLocationServiceEnabled()) {
         throw Exception('ط®ط¯ظ…ط© ط§ظ„ظ…ظˆظ‚ط¹ ط؛ظٹط± ظ…ظپط¹ظ„ط©.');
+      }
       var p = await Geolocator.checkPermission();
-      if (p == LocationPermission.denied)
+      if (p == LocationPermission.denied) {
         p = await Geolocator.requestPermission();
+      }
       if (p == LocationPermission.denied ||
-          p == LocationPermission.deniedForever)
+          p == LocationPermission.deniedForever) {
         throw Exception('ظ„ظ… ظٹطھظ… ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„ظ…ظˆظ‚ط¹.');
+      }
       final x = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
       );
-      if (mounted)
+      if (mounted) {
         setState(() {
           lat.text = x.latitude.toStringAsFixed(7);
           lng.text = x.longitude.toStringAsFixed(7);
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$e')));
+      }
     }
   }
 
@@ -246,11 +253,12 @@ class _ComplaintFormState extends State<ComplaintForm> {
       context,
       MaterialPageRoute(builder: (_) => const LocationPickerPage()),
     );
-    if (p != null && mounted)
+    if (p != null && mounted) {
       setState(() {
         lat.text = p.latitude.toStringAsFixed(7);
         lng.text = p.longitude.toStringAsFixed(7);
       });
+    }
   }
 
   Future<void> save() async {
@@ -653,10 +661,11 @@ class _ComplaintDetailsPageState extends State<ComplaintDetailsPage> {
       final x = await widget.api.getOne('/complaints/${widget.id}');
       if (mounted) setState(() => d = x);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$e')));
+      }
     }
   }
 
@@ -671,8 +680,9 @@ class _ComplaintDetailsPageState extends State<ComplaintDetailsPage> {
 
   @override
   Widget build(BuildContext c) {
-    if (d == null)
+    if (d == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final x = d!;
     final w = (x['work_orders'] as List?) ?? const [];
     return Scaffold(
@@ -743,17 +753,19 @@ class _WorkOrderDetailsPageState extends State<WorkOrderDetailsPage> {
       final x = await widget.api.getOne('/work-orders/${widget.id}');
       if (mounted) setState(() => d = x);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$e')));
+      }
     }
   }
 
   @override
   Widget build(BuildContext c) {
-    if (d == null)
+    if (d == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final x = d!;
     final q = (x['complaints'] as List?) ?? const [];
     return Scaffold(
@@ -860,8 +872,10 @@ class _ConvertDialogState extends State<ConvertDialog> {
     me = await widget.api.session();
     final raw = (widget.data['assigned_to'] as Map?)?['id'];
     assignedTo = raw is num ? raw.toInt() : null;
-    if (assignedTo == null && me?.permissions.contains('tasks.assign') == true)
+    if (assignedTo == null &&
+        me?.permissions.contains('tasks.assign') == true) {
       assignedTo = me!.id;
+    }
     if (me?.permissions.contains('users.view') == true &&
         me?.permissions.contains('tasks.assign') == true) {
       try {
@@ -1065,10 +1079,11 @@ class _MapPageState extends State<MapPage> {
       final x = await widget.api.operationalMap();
       if (mounted) setState(() => d = x);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$e')));
+      }
     }
   }
 
@@ -1124,7 +1139,7 @@ class _MapPageState extends State<MapPage> {
       final m = Map<String, dynamic>.from(raw);
       final a = (m['latitude'] as num?)?.toDouble(),
           b = (m['longitude'] as num?)?.toDouble();
-      if (a != null && b != null)
+      if (a != null && b != null) {
         markers.add(
           Marker(
             point: LatLng(a, b),
@@ -1140,12 +1155,13 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
         );
+      }
     }
     for (final raw in orders) {
       final m = Map<String, dynamic>.from(raw);
       final a = (m['latitude'] as num?)?.toDouble(),
           b = (m['longitude'] as num?)?.toDouble();
-      if (a != null && b != null)
+      if (a != null && b != null) {
         markers.add(
           Marker(
             point: LatLng(a, b),
@@ -1161,6 +1177,7 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
         );
+      }
     }
     return Stack(
       children: [

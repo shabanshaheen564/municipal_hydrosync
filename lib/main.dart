@@ -300,10 +300,11 @@ class _HomePageState extends State<HomePage> {
     final n = await syncService.syncNow();
     if (!mounted) return;
     setState(() => pending = syncService.pending.value);
-    if (n > 0)
+    if (n > 0) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('تمت مزامنة $n عملية بنجاح')));
+    }
   }
 
   @override

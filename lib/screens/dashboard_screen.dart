@@ -32,11 +32,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> load() async {
     try {
       final x = await widget.api.summary();
-      if (mounted)
+      if (mounted) {
         setState(() {
           data = x;
           loading = false;
         });
+      }
     } catch (e) {
       if (mounted) {
         setState(() => loading = false);
