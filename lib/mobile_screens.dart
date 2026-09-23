@@ -261,6 +261,22 @@ class _ComplaintFormState extends State<ComplaintForm> {
     }
   }
 
+  Future<void> gps() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) throw Exception('خدمة الموقع غير مفعلة.');
+      var p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+      if (p == LocationPermission.denied || p == LocationPermission.deniedForever) throw Exception('لم يتم السماح بالموقع.');
+      final x = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+      if (mounted) setState(() { lat.text = x.latitude.toStringAsFixed(7); lng.text = x.longitude.toStringAsFixed(7); });
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'))); }
+  }
+
+  Future<void> pick() async {
+    final p = await Navigator.push<LatLng>(context, MaterialPageRoute(builder: (_) => const LocationPickerPage()));
+    if (p != null && mounted) setState(() { lat.text = p.latitude.toStringAsFixed(7); lng.text = p.longitude.toStringAsFixed(7); });
+  }
+
   Future<void> save() async {
     if (title.text.trim().isEmpty || description.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -420,7 +436,9 @@ class WorkOrderForm extends StatefulWidget {
 class _WorkOrderFormState extends State<WorkOrderForm> {
   final title = TextEditingController(),
       description = TextEditingController(),
-      notes = TextEditingController();
+      notes = TextEditingController(),
+      lat = TextEditingController(),
+      lng = TextEditingController();
   String status = 'pending', priority = 'medium';
   int? complaintId, assignedTo;
   ApiList? complaints, users;
@@ -454,6 +472,8 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
     title.dispose();
     description.dispose();
     notes.dispose();
+    lat.dispose();
+    lng.dispose();
     super.dispose();
   }
 
@@ -476,6 +496,8 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
         if (complaintId != null) 'complaint_id': complaintId,
         if (assignedTo != null) 'assigned_to': assignedTo,
         if (notes.text.trim().isNotEmpty) 'notes': notes.text.trim(),
+        if (double.tryParse(lat.text) != null) 'latitude': double.parse(lat.text),
+        if (double.tryParse(lng.text) != null) 'longitude': double.parse(lng.text),
       };
       final r = await widget.api.create('/work-orders', b);
       if (!mounted) return;
@@ -621,6 +643,16 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
                 maxLines: 4,
                 decoration: const InputDecoration(labelText: 'ظ…ظ„ط§ط­ط¸ط§طھ'),
               ),
+              Row(children: [
+                Expanded(child: TextField(controller: lat, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: const InputDecoration(labelText: 'خط العرض'))),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(controller: lng, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: const InputDecoration(labelText: 'خط الطول'))),
+              ]),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, children: [
+                OutlinedButton.icon(onPressed: busy ? null : pick, icon: const Icon(Icons.map), label: const Text('تحديد على الخريطة')),
+                OutlinedButton.icon(onPressed: busy ? null : gps, icon: const Icon(Icons.my_location), label: const Text('موقع الهاتف')),
+              ]),
             ],
           ),
         ),
