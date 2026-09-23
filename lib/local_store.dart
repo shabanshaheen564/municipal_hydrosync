@@ -218,7 +218,7 @@ class LocalStore {
     final serverId = serverRecord['id'];
     if (serverId == null) return;
 
-    int? localId;
+    int? localId = (queueItem(queueId)?['local_id'] as num?)?.toInt();
     for (final key in _cache.keys.toList()) {
       final keyString = '$key';
       if (!keyString.startsWith('$user|')) continue;
