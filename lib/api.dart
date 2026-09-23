@@ -395,12 +395,21 @@ class ApiClient {
         await LocalStore.removeQueueItem('${a['id']}');
         done++;
       } on ApiException catch (e) {
-        // Only stop on network errors (status 0)
+        // Network failure: keep the item for a later retry.
         if (e.status == 0) break;
-        // Remove failed items to prevent infinite retry
-        await LocalStore.removeQueueItem('${a['id']}');
+
+        // Server-side validation/auth/conflict failures must never be
+        // silently deleted. Preserve the action and record the reason.
+        await LocalStore.markQueueFailure(
+          '${a['id']}',
+          statusCode: e.status,
+          message: e.message,
+        );
+
+        // A failed action should not block unrelated queued actions.
+        continue;
       } catch (_) {
-        // Network or unknown error, stop processing
+        // Unknown/network error: keep the item and retry later.
         break;
       }
     }
