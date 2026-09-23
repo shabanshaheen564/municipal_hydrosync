@@ -245,7 +245,21 @@ class ApiClient {
     final items =
         (raw as List).map((e) => Map<String, dynamic>.from(e)).toList();
     final pending = await _pendingCreates(endpoint);
-    if (pending.isNotEmpty) items.insertAll(0, pending);
+    if (pending.isNotEmpty) {
+      final existingQueueIds =
+          items
+              .map((item) => item['local_queue_id']?.toString())
+              .whereType<String>()
+              .toSet();
+      items.insertAll(
+        0,
+        pending.where(
+          (item) => !existingQueueIds.contains(
+            item['local_queue_id']?.toString(),
+          ),
+        ),
+      );
+    }
     final total =
         d is Map && d['meta'] is Map && d['meta']['total'] is num
             ? (d['meta']['total'] as num).toInt()
