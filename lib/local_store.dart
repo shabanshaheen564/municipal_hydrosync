@@ -198,4 +198,92 @@ class LocalStore {
         await writeCache(keyString, [record, ...data]);
     }
   }
+  static Future<void> reconcileCreatedRecord(
+    String user,
+    String endpoint,
+    String queueId,
+    Map<String, dynamic> serverRecord,
+  ) async {
+    final serverId = serverRecord['id'];
+    if (serverId == null) return;
+
+    int? localId;
+    for (final key in _cache.keys.toList()) {
+      final keyString = '$key';
+      if (!keyString.startsWith('$user|')) continue;
+      final cached = readCache(keyString);
+      if (cached == null) continue;
+      final data = cached['data'];
+
+      dynamic transform(dynamic item) {
+        if (item is! Map || item['local_queue_id'] != queueId) return item;
+        localId = (item['id'] as num?)?.toInt();
+        return {
+          ...Map<String, dynamic>.from(item),
+          ...serverRecord,
+          'id': serverId,
+          'queued': false,
+          'local_pending': false,
+          'local_queue_id': null,
+        };
+      }
+
+      if (data is Map && data['data'] is List) {
+        final list = (data['data'] as List).map(transform).toList();
+        await writeCache(keyString, {
+          ...Map<String, dynamic>.from(data),
+          'data': list,
+        });
+      } else if (data is List) {
+        await writeCache(keyString, data.map(transform).toList());
+      } else if (data is Map) {
+        await writeCache(keyString, transform(data));
+      }
+    }
+
+    if (localId != null && serverId is num) {
+      await _rewriteQueueReferences(localId!, serverId.toInt());
+    }
+  }
+
+  static Future<void> _rewriteQueueReferences(int localId, int serverId) async {
+    final oldPath = '/$localId';
+    final newPath = '/$serverId';
+
+    for (final item in queueItems()) {
+      final id = '${item['id']}';
+      final endpoint = '${item['endpoint']}';
+      var changed = false;
+
+      if (endpoint.contains(oldPath)) {
+        item['endpoint'] = endpoint.replaceAll(oldPath, newPath);
+        changed = true;
+      }
+
+      final body = item['body'];
+      if (body is Map) {
+        final rewritten = _rewriteValue(body, localId, serverId);
+        item['body'] = rewritten;
+        changed = true;
+      }
+
+      if (changed) {
+        await _queue.put(id, jsonEncode(item));
+      }
+    }
+  }
+
+  static dynamic _rewriteValue(dynamic value, int localId, int serverId) {
+    if (value is Map) {
+      return value.map(
+        (key, item) => MapEntry(key, _rewriteValue(item, localId, serverId)),
+      );
+    }
+    if (value is List) {
+      return value.map((item) => _rewriteValue(item, localId, serverId)).toList();
+    }
+    if (value is num && value.toInt() == localId) return serverId;
+    return value;
+  }
+
 }
