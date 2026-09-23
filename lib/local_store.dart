@@ -116,11 +116,15 @@ class LocalStore {
     try {
       final item = Map<String, dynamic>.from(jsonDecode(raw));
       final attempts = (item['attempts'] as num?)?.toInt() ?? 0;
-      item['attempts'] = attempts + 1;
+      final nextAttempts = attempts + 1;
+      final delaySeconds = (20 * (1 << (nextAttempts - 1))).clamp(20, 3600);
+      item['attempts'] = nextAttempts;
       item['status'] = 'failed';
       item['last_status_code'] = statusCode;
       item['last_error'] = message;
       item['last_attempt_at'] = DateTime.now().toIso8601String();
+      item['next_retry_at'] =
+          DateTime.now().add(Duration(seconds: delaySeconds)).toIso8601String();
       await _queue.put(id, jsonEncode(item));
     } catch (_) {}
   }
