@@ -1,7 +1,7 @@
 name: municipal_hydrosync
-description: "Municipal HydroSync field operations application."
+description: "Deir al-Balah Municipality Water Management field application."
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.7.0
