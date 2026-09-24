@@ -46,7 +46,7 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
     final scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF087EA4));
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Municipal HydroSync',
+      title: 'نظام إدارة مياه بلدية دير البلح',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: scheme,
@@ -167,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Municipal HydroSync',
+                      'نظام إدارة مياه بلدية دير البلح',
                       style: TextStyle(
                         fontSize: 27,
                         fontWeight: FontWeight.w800,
@@ -322,7 +322,7 @@ class _HomePageState extends State<HomePage> {
     child: Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Municipal HydroSync',
+          'نظام إدارة مياه بلدية دير البلح',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: [
