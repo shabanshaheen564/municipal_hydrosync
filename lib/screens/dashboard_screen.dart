@@ -51,7 +51,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  num metric(Iterable<String> keys) {
+  num metric(String section, Iterable<String> keys) {
+    final values = data?[section];
+    if (values is Map) {
+      for (final key in keys) {
+        final value = values[key];
+        if (value is num) return value;
+      }
+    }
+
+    // Keep compatibility with any legacy flat summary response.
     for (final key in keys) {
       final value = data?[key];
       if (value is num) return value;
@@ -65,18 +74,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final complaints = metric([
+    final complaints = metric('complaints', [
+      'total',
+      'total_with_archive',
       'complaints',
       'complaints_total',
       'total_complaints',
     ]);
-    final openComplaints = metric(['open_complaints', 'complaints_open']);
-    final workOrders = metric([
+    final openComplaints = metric('complaints', ['open', 'open_complaints', 'complaints_open']);
+    final workOrders = metric('tasks', [
+      'total',
+      'total_with_archive',
       'work_orders',
       'work_orders_total',
       'total_work_orders',
     ]);
-    final completed = metric([
+    final completed = metric('tasks', [
+      'completed',
       'completed_work_orders',
       'completed_tasks',
       'tasks_completed',
