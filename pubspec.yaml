@@ -1,7 +1,7 @@
 name: municipal_hydrosync
 description: "Deir al-Balah Municipality Water Management field application."
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.7.0
@@ -19,6 +19,8 @@ dependencies:
   hive_ce_flutter: ^2.3.4
   connectivity_plus: ^6.1.5
   flutter_local_notifications: ^19.5.0
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
 
 dev_dependencies:
   flutter_test:
