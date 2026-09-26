@@ -17,11 +17,7 @@ class ApiException implements Exception {
   const ApiException(this.status, this.message, {this.method = '', this.path = ''});
 
   @override
-  String toString() {
-    final code = status > 0 ? ' HTTP ' + status.toString() : '';
-    final request = method.isEmpty || path.isEmpty ? '' : ' [' + method + ' ' + path + ']';
-    return message + code + request;
-  }
+  String toString() => message;
 }
 
 class ApiClient {
@@ -106,16 +102,14 @@ class ApiClient {
     } on TimeoutException {
       throw ApiException(
         0,
-        'انتهت مهلة الاتصال بالخادم. تحقق من الإنترنت أو أن الخادم يعمل.',
+        'الاتصال بالسيرفر يستغرق وقتاً طويلاً، حاول مرة أخرى.',
         method: method,
         path: path,
       );
     } on SocketException catch (e) {
       throw ApiException(
         0,
-        'تعذر الوصول إلى الخادم. تحقق من الإنترنت واسم النطاق. (' +
-            e.message +
-            ')',
+        'السيرفر لا يستجيب حالياً، تحقق من اتصال الإنترنت وحاول مرة أخرى.',
         method: method,
         path: path,
       );
@@ -123,7 +117,7 @@ class ApiClient {
       if (e is ApiException) rethrow;
       throw ApiException(
         0,
-        'حدث خطأ أثناء الاتصال بالخادم: ' + e.toString(),
+        'حدث خطأ أثناء الاتصال بالسيرفر، حاول مرة أخرى.',
         method: method,
         path: path,
       );
@@ -135,25 +129,50 @@ class ApiClient {
       d = r.body;
     }
     if (r.statusCode < 200 || r.statusCode >= 300) {
-      var message = 'حدث خطأ في الخادم.';
-      if (d is Map) {
-        final rawMessage = d['message'] ?? d['error'];
-        if (rawMessage != null && rawMessage.toString().trim().isNotEmpty) {
-          message = rawMessage.toString();
-        }
-        final errors = d['errors'];
-        if (errors is Map && errors.isNotEmpty) {
-          final details = errors.entries.map((entry) {
-            final value = entry.value is List
-                ? (entry.value as List).join('، ')
-                : entry.value.toString();
-            return entry.key.toString() + ': ' + value;
-          }).join(' | ');
-          message = message + ' — ' + details;
-        }
-      } else if (d is String && d.trim().isNotEmpty) {
-        message = d.trim();
+      String message;
+      switch (r.statusCode) {
+        case 401:
+          message = method == 'POST' && path == '/login'
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+              : 'انتهت جلسة الدخول، سجّل الدخول مرة أخرى.';
+          break;
+        case 403:
+          message = 'ليس لديك صلاحية لتنفيذ هذا الإجراء.';
+          break;
+        case 404:
+          message = 'الخدمة المطلوبة غير متاحة حالياً.';
+          break;
+        case 422:
+          message = 'البيانات المدخلة غير صحيحة، تحقق منها وحاول مرة أخرى.';
+          break;
+        case 429:
+          message = 'تم إرسال طلبات كثيرة، انتظر قليلاً ثم حاول مرة أخرى.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          message = 'حدث خطأ في السيرفر، حاول مرة أخرى لاحقاً.';
+          break;
+        default:
+          message = 'تعذر إكمال العملية حالياً، حاول مرة أخرى.';
       }
+
+      if (r.statusCode == 422 && d is Map) {
+        final rawMessage = d['message'];
+        if (rawMessage is String && rawMessage.trim().isNotEmpty) {
+          final lower = rawMessage.toLowerCase();
+          final looksTechnical = lower.contains('validation') ||
+              lower.contains('unauthorized') ||
+              lower.contains('forbidden') ||
+              lower.contains('not found') ||
+              lower.contains('server error');
+          if (!looksTechnical) {
+            message = rawMessage.trim();
+          }
+        }
+      }
+
       throw ApiException(r.statusCode, message, method: method, path: path);
     }
     return d;
