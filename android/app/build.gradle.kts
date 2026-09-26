@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId = "ps.modb.water"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
