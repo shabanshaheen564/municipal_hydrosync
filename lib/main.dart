@@ -37,7 +37,9 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
   }
 
   Future<void> boot() async {
-    if (await api.isLoggedIn()) user = await api.session();
+    if (await api.isLoggedIn()) {
+      user = await api.refreshSession();
+    }
     if (mounted) setState(() => loading = false);
   }
 
