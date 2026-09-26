@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,9 +11,17 @@ import 'local_store.dart';
 class ApiException implements Exception {
   final int status;
   final String message;
-  const ApiException(this.status, this.message);
+  final String method;
+  final String path;
+
+  const ApiException(this.status, this.message, {this.method = '', this.path = ''});
+
   @override
-  String toString() => message;
+  String toString() {
+    final code = status > 0 ? ' HTTP ' + status.toString() : '';
+    final request = method.isEmpty || path.isEmpty ? '' : ' [' + method + ' ' + path + ']';
+    return message + code + request;
+  }
 }
 
 class ApiClient {
@@ -93,11 +103,29 @@ class ApiClient {
         default:
           throw const ApiException(0, 'طريقة طلب غير مدعومة.');
       }
+    } on TimeoutException {
+      throw ApiException(
+        0,
+        'انتهت مهلة الاتصال بالخادم. تحقق من الإنترنت أو أن الخادم يعمل.',
+        method: method,
+        path: path,
+      );
+    } on SocketException catch (e) {
+      throw ApiException(
+        0,
+        'تعذر الوصول إلى الخادم. تحقق من الإنترنت واسم النطاق. (' +
+            e.message +
+            ')',
+        method: method,
+        path: path,
+      );
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw const ApiException(
+      throw ApiException(
         0,
-        'تعذر الاتصال بالخادم. تحقق من الإنترنت أو عنوان API.',
+        'حدث خطأ أثناء الاتصال بالخادم: ' + e.toString(),
+        method: method,
+        path: path,
       );
     }
     dynamic d;
@@ -107,13 +135,68 @@ class ApiClient {
       d = r.body;
     }
     if (r.statusCode < 200 || r.statusCode >= 300) {
-      final message =
-          d is Map
-              ? '${d['message'] ?? d['error'] ?? 'حدث خطأ في الخادم'}'
-              : 'حدث خطأ في الخادم';
-      throw ApiException(r.statusCode, message);
+      var message = 'حدث خطأ في الخادم.';
+      if (d is Map) {
+        final rawMessage = d['message'] ?? d['error'];
+        if (rawMessage != null && rawMessage.toString().trim().isNotEmpty) {
+          message = rawMessage.toString();
+        }
+        final errors = d['errors'];
+        if (errors is Map && errors.isNotEmpty) {
+          final details = errors.entries.map((entry) {
+            final value = entry.value is List
+                ? (entry.value as List).join('، ')
+                : entry.value.toString();
+            return entry.key.toString() + ': ' + value;
+          }).join(' | ');
+          message = message + ' — ' + details;
+        }
+      } else if (d is String && d.trim().isNotEmpty) {
+        message = d.trim();
+      }
+      throw ApiException(r.statusCode, message, method: method, path: path);
     }
     return d;
+  }
+
+  Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    return Map<String, dynamic>.from(
+      await _send('POST', '/forgot-password', body: {'email': email.trim()}),
+    );
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    return Map<String, dynamic>.from(await _send(
+      'POST',
+      '/reset-password',
+      body: {
+        'token': token,
+        'email': email.trim(),
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      },
+    ));
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    return Map<String, dynamic>.from(await _send(
+      'PUT',
+      '/profile/password',
+      body: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': newPasswordConfirmation,
+      },
+    ));
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
