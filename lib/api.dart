@@ -124,10 +124,36 @@ class ApiClient {
         body: {'email': email, 'password': password},
       ),
     );
+
     final p = await _prefs;
     await p.setString(_tokenKey, '${d['token']}');
-    await p.setString(_userKey, jsonEncode(d['user']));
-    return d;
+
+    // The login endpoint returns basic user data only. Fetch the authenticated
+    // user immediately so roles and permissions are available in the mobile UI.
+    final current = await _send('GET', '/user');
+    final user = current is Map && current['user'] is Map
+        ? Map<String, dynamic>.from(current['user'])
+        : Map<String, dynamic>.from(d['user'] ?? {});
+
+    await p.setString(_userKey, jsonEncode(user));
+    return {...d, 'user': user};
+  }
+
+  Future<SessionUser?> refreshSession() async {
+    if (!(await isLoggedIn())) return null;
+    try {
+      final current = await _send('GET', '/user');
+      if (current is Map && current['user'] is Map) {
+        final user = Map<String, dynamic>.from(current['user']);
+        final p = await _prefs;
+        await p.setString(_userKey, jsonEncode(user));
+        return SessionUser.fromJson(user);
+      }
+    } catch (_) {
+      // Keep the locally cached session when the server is temporarily
+      // unavailable. The next successful refresh will update it.
+    }
+    return session();
   }
 
   Future<void> clearLocalCache() async =>
