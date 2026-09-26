@@ -1,14 +1,45 @@
+import 'dart:convert';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'config.dart';
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+  }
+
+  // Notification payloads are displayed by Android while the app is in the
+  // background/terminated state. Data-only messages need a local notification.
+  if (message.notification == null && message.data.isNotEmpty) {
+    await NotificationService.initializeLocalOnly();
+    final title = '${message.data['title'] ?? 'إدارة الشكاوى'}';
+    final body = '${message.data['body'] ?? 'لديك تحديث جديد.'}';
+    await NotificationService.show(
+      title: title,
+      body: body,
+      payload: '${message.data['type'] ?? 'general'}',
+    );
+  }
+}
 
 class NotificationService {
   NotificationService._();
 
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  static bool _localInitialized = false;
   static bool _initialized = false;
+  static bool _fcmListenersAttached = false;
 
-  static Future<void> initialize() async {
-    if (_initialized) return;
+  static Future<void> initializeLocalOnly() async {
+    if (_localInitialized) return;
 
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('ic_launcher'),
@@ -28,7 +59,80 @@ class NotificationService {
     );
     await android?.requestNotificationsPermission();
 
+    _localInitialized = true;
+  }
+
+  static Future<void> initialize() async {
+    if (_initialized) return;
+
+    await initializeLocalOnly();
+
+    if (!kIsWeb) {
+      try {
+        await Firebase.initializeApp();
+        final messaging = FirebaseMessaging.instance;
+        await messaging.setAutoInitEnabled(true);
+        await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+        if (!_fcmListenersAttached) {
+          FirebaseMessaging.onBackgroundMessage(
+            firebaseMessagingBackgroundHandler,
+          );
+          FirebaseMessaging.onMessage.listen((message) async {
+            final notification = message.notification;
+            final title = notification?.title ?? message.data['title'];
+            final body = notification?.body ?? message.data['body'];
+            if (title != null && body != null) {
+              await show(
+                title: '$title',
+                body: '$body',
+                payload: '${message.data['type'] ?? 'general'}',
+              );
+            }
+          });
+          _fcmListenersAttached = true;
+        }
+
+        final token = await messaging.getToken();
+        if (token != null && token.isNotEmpty) {
+          await _registerToken(token);
+        }
+        messaging.onTokenRefresh.listen(_registerToken);
+      } catch (_) {
+        // Local notifications must continue to work even when Firebase has
+        // not been configured on this installation yet.
+      }
+    }
+
     _initialized = true;
+  }
+
+  static Future<void> _registerToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = prefs.getString('auth_token');
+      if (authToken == null || authToken.isEmpty) return;
+
+      final response = await http
+          .post(
+            Uri.parse('${AppConfig.apiBaseUrl}/device/fcm-token'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $authToken',
+            },
+            body: jsonEncode({'token': token, 'platform': 'android'}),
+          )
+          .timeout(AppConfig.requestTimeout);
+
+      if (response.statusCode < 200 || response.statusCode >= 300) return;
+    } catch (_) {
+      // Token registration is retried on the next app start/token refresh.
+    }
   }
 
   static Future<void> show({
@@ -37,7 +141,7 @@ class NotificationService {
     int? id,
     String? payload,
   }) async {
-    await initialize();
+    await initializeLocalOnly();
 
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
