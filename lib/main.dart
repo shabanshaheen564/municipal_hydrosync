@@ -10,6 +10,7 @@ import 'screens/complaints_screen.dart';
 import 'screens/work_orders_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'widgets/common_widgets.dart';
 
 Future<void> main() async {
@@ -210,7 +211,25 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ForgotPasswordScreen(
+                                      api: widget.api,
+                                    ),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.lock_reset),
+                        label: const Text('نسيت كلمة المرور؟'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
