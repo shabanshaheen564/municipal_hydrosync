@@ -120,6 +120,16 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.lock_reset),
+            title: const Text('تغيير كلمة المرور'),
+            subtitle: const Text('تحديث كلمة المرور الحالية للحساب'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () => _showChangePasswordDialog(context),
+          ),
+        ),
         const SizedBox(height: 28),
         // Logout
         FilledButton.tonalIcon(
@@ -129,6 +139,96 @@ class ProfileScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _showChangePasswordDialog(BuildContext context) async {
+    final current = TextEditingController();
+    final next = TextEditingController();
+    final confirm = TextEditingController();
+    bool busy = false;
+
+    try {
+      await showDialog(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text('تغيير كلمة المرور'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: current,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'كلمة المرور الحالية'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: next,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'كلمة المرور الجديدة'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: confirm,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'تأكيد كلمة المرور الجديدة'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.pop(context),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        if (next.text != confirm.text) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('تأكيد كلمة المرور غير مطابق.')),
+                          );
+                          return;
+                        }
+                        setState(() => busy = true);
+                        try {
+                          final result = await api.changePassword(
+                            currentPassword: current.text,
+                            newPassword: next.text,
+                            newPasswordConfirmation: confirm.text,
+                          );
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                result['message']?.toString() ??
+                                    'تم تغيير كلمة المرور بنجاح.',
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        } finally {
+                          if (context.mounted) setState(() => busy = false);
+                        }
+                      },
+                child: Text(busy ? 'جاري الحفظ...' : 'حفظ'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      current.dispose();
+      next.dispose();
+      confirm.dispose();
+    }
   }
 
   Future<void> _showLogoutDialog(BuildContext context) async {
