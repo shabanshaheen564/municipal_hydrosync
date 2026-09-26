@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'api.dart';
 import 'local_store.dart';
+import 'notification_service.dart';
 
 enum SyncState { idle, syncing, offline, error }
 
@@ -21,6 +22,7 @@ class SyncService {
   SyncService(this.api);
 
   Future<void> start() async {
+    await NotificationService.initialize();
     await refresh();
     _subscription = Connectivity().onConnectivityChanged.listen((_) => syncNow());
     _timer = Timer.periodic(const Duration(seconds: 20), (_) => syncNow());
@@ -47,6 +49,9 @@ class SyncService {
           ? (failed.value > 0 ? SyncState.error : SyncState.offline)
           : SyncState.idle;
       revision.value++;
+      if (count > 0) {
+        await NotificationService.showSyncCompleted(count);
+      }
       return count;
     } catch (_) {
       await refresh();
