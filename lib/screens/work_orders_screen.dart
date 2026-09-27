@@ -184,7 +184,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
                       subtitle: 'لم يتم إنشاء أي مهام ميدانية حتى الآن',
                       icon: Icons.engineering_outlined,
                       action: FilledButton.icon(
-                        onPressed: () {},
+                        onPressed: _createWorkOrder,
                         icon: const Icon(Icons.add),
                         label: const Text('إنشاء مهمة'),
                       ),
