@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../api.dart';
@@ -16,6 +18,111 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   Map<String, dynamic>? data;
   final mapController = MapController();
+  final searchController = TextEditingController();
+  List<Map<String, dynamic>> searchResults = [];
+  bool searching = false;
+  LatLng? searchPoint;
+
+  Future<void> _searchPlaces(String value) async {
+    final query = value.trim();
+    if (query.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      searching = true;
+      searchResults = [];
+    });
+    try {
+      final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
+        'q': query,
+        'format': 'jsonv2',
+        'limit': '10',
+        'addressdetails': '1',
+        'accept-language': 'ar',
+        'countrycodes': 'ps',
+        'viewbox': '34.30,31.50,34.45,31.35',
+        'bounded': '1',
+      });
+      final response = await http.get(uri, headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'DeirAlBalahMunicipalityWaterApp/1.0',
+      });
+      if (response.statusCode != 200) throw Exception();
+      final decoded = jsonDecode(response.body);
+      if (decoded is! List) throw Exception();
+      final results = decoded.whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item)).toList();
+      if (!mounted) return;
+      setState(() {
+        searching = false;
+        searchResults = results;
+      });
+      if (results.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('لم يتم العثور على نتائج ضمن المنطقة.')),
+        );
+      } else {
+        _showSearchResults();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => searching = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر البحث حالياً، حاول مرة أخرى.')),
+      );
+    }
+  }
+
+  String _resultTitle(Map<String, dynamic> result) {
+    final name = '${result['name'] ?? ''}'.trim();
+    if (name.isNotEmpty) return name;
+    final displayName = '${result['display_name'] ?? ''}'.trim();
+    return displayName.isEmpty ? 'نتيجة بدون اسم' : displayName.split(',').first;
+  }
+
+  void _showSearchResults() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.62,
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Text('نتائج البحث',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: searchResults.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, index) {
+                    final result = searchResults[index];
+                    final lat = double.tryParse('${result['lat']}');
+                    final lon = double.tryParse('${result['lon']}');
+                    return ListTile(
+                      leading: const Icon(Icons.location_on),
+                      title: Text(_resultTitle(result)),
+                      subtitle: Text('${result['display_name'] ?? ''}',
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      onTap: lat == null || lon == null ? null : () {
+                        Navigator.pop(context);
+                        final point = LatLng(lat, lon);
+                        setState(() => searchPoint = point);
+                        mapController.move(point, 16);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -38,6 +145,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    searchController.dispose();
     mapController.dispose();
     super.dispose();
   }
@@ -210,6 +318,15 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
 
+    if (searchPoint != null) {
+      markers.add(Marker(
+        point: searchPoint!,
+        width: 48,
+        height: 48,
+        child: const Icon(Icons.location_on, color: Colors.blue, size: 44),
+      ));
+    }
+
     return Stack(
       children: [
         FlutterMap(
@@ -227,9 +344,45 @@ class _MapScreenState extends State<MapScreen> {
             MarkerLayer(markers: markers),
           ],
         ),
-        // Stats card
         Positioned(
           top: 12,
+          left: 12,
+          right: 12,
+          child: Card(
+            elevation: 4,
+            child: TextField(
+              controller: searchController,
+              textInputAction: TextInputAction.search,
+              onSubmitted: _searchPlaces,
+              decoration: InputDecoration(
+                hintText: 'ابحث عن شارع أو معلم أو منطقة...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: searching
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : IconButton(
+                        tooltip: 'بحث',
+                        onPressed: () => _searchPlaces(searchController.text),
+                        icon: const Icon(Icons.search),
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+              ),
+            ),
+          ),
+        ),
+        // Stats card
+        Positioned(
+          top: 78,
           right: 12,
           child: Card(
             child: Padding(
