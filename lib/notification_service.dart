@@ -118,9 +118,10 @@ class NotificationService {
   /// Initialization may happen before login so Android can request the
   /// notification permission, therefore token registration is retried here.
   static Future<void> registerCurrentToken() async {
-    if (!_initialized || kIsWeb) return;
+    if (kIsWeb) return;
 
     try {
+      if (!_initialized) await initialize();
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null && token.isNotEmpty) {
         await _registerToken(token);
