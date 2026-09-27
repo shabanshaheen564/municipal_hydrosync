@@ -29,7 +29,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    widget.syncService.revision.addListener(_syncRevisionChanged);
     load();
+  }
+
+  void _syncRevisionChanged() {
+    if (mounted) load();
+  }
+
+  @override
+  void dispose() {
+    widget.syncService.revision.removeListener(_syncRevisionChanged);
+    super.dispose();
   }
 
   Future<void> load() async {
