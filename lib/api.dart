@@ -218,12 +218,12 @@ class ApiClient {
     ));
   }
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String login, String password) async {
     final d = Map<String, dynamic>.from(
       await _send(
         'POST',
         '/login',
-        body: {'email': email, 'password': password},
+        body: {'login': login.trim(), 'password': password},
       ),
     );
 
@@ -256,6 +256,24 @@ class ApiClient {
       // unavailable. The next successful refresh will update it.
     }
     return session();
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String username,
+    required String email,
+  }) async {
+    final d = Map<String, dynamic>.from(await _send(
+      'PUT',
+      '/profile',
+      body: {'name': name.trim(), 'username': username.trim(), 'email': email.trim()},
+    ));
+    final user = d['user'];
+    if (user is Map) {
+      final p = await _prefs;
+      await p.setString(_userKey, jsonEncode(user));
+    }
+    return d;
   }
 
   Future<void> clearLocalCache() async =>
