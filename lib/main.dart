@@ -37,6 +37,7 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(NotificationService.initialize());
     boot();
   }
@@ -284,7 +285,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int tab = 0;
   int pending = 0;
   late final List<Widget> pages;
@@ -307,7 +308,7 @@ class _HomePageState extends State<HomePage> {
       ),
       ComplaintsScreen(api: widget.api, syncService: syncService),
       WorkOrdersScreen(api: widget.api, syncService: syncService),
-      MapScreen(api: widget.api),
+      MapScreen(api: widget.api, syncService: syncService),
       ProfileScreen(
         user: widget.user,
         api: widget.api,
@@ -339,7 +340,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(syncService.syncNow());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     syncService.pending.removeListener(_syncChanged);
     connectivity.isOnline.removeListener(_connectivityChanged);
     syncService.dispose();
