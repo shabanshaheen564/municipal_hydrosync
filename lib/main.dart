@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'api.dart';
@@ -18,7 +20,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await LocalStore.init();
-  await NotificationService.initialize();
   runApp(const HydroSyncApp());
 }
 
@@ -36,6 +37,7 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
   @override
   void initState() {
     super.initState();
+    unawaited(NotificationService.initialize());
     boot();
   }
 
