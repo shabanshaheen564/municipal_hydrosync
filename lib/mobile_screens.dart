@@ -7,22 +7,22 @@ import 'models.dart';
 
 String statusLabel(String v) =>
     const {
-      'open': 'ظ…ظپطھظˆط­ط©',
-      'in_progress': 'ظ‚ظٹط¯ ط§ظ„ظ…ط¹ط§ظ„ط¬ط©',
-      'resolved': 'ظ…ط­ظ„ظˆظ„ط©',
-      'closed': 'ظ…ط؛ظ„ظ‚ط©',
-      'cancelled': 'ظ…ظ„ط؛ط§ط©',
-      'pending': 'ظ‚ظٹط¯ ط§ظ„ط§ظ†طھط¸ط§ط±',
-      'assigned': 'ظ…ط³ظ†ط¯ط©',
-      'completed': 'ظ…ظƒطھظ…ظ„ط©',
+      'open': 'مفتوحة',
+      'in_progress': 'قيد المعالجة',
+      'resolved': 'محلولة',
+      'closed': 'مغلقة',
+      'cancelled': 'ملغاة',
+      'pending': 'قيد الانتظار',
+      'assigned': 'مسندة',
+      'completed': 'مكتملة',
     }[v] ??
     v;
 String priorityLabel(String v) =>
     const {
-      'low': 'ظ…ظ†ط®ظپط¶ط©',
-      'medium': 'ظ…طھظˆط³ط·ط©',
-      'high': 'ط¹ط§ظ„ظٹط©',
-      'urgent': 'ط·ط§ط±ط¦ط©',
+      'low': 'منخفضة',
+      'medium': 'متوسطة',
+      'high': 'عالية',
+      'urgent': 'طارئة',
     }[v] ??
     v;
 
@@ -94,7 +94,7 @@ class _ListPageState extends State<ListPage> {
             onChanged: (v) => search = v,
             onSubmitted: (_) => load(),
             decoration: InputDecoration(
-              labelText: 'ط¨ط­ط«',
+              labelText: 'بحث',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 onPressed: load,
@@ -116,7 +116,7 @@ class _ListPageState extends State<ListPage> {
                     ? ListView(
                       children: const [
                         SizedBox(height: 100),
-                        Center(child: Text('ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ')),
+                        Center(child: Text('لا توجد بيانات')),
                       ],
                     )
                     : ListView.builder(
@@ -135,12 +135,12 @@ class _ListPageState extends State<ListPage> {
                           child: ListTile(
                             leading: CircleAvatar(child: Icon(widget.icon)),
                             title: Text(
-                              '${n ?? '-'} â€” ${m['title'] ?? ''}',
+                              '${n ?? '-'} — ${m['title'] ?? ''}',
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Text(
-                              '${statusLabel('${m['status'] ?? ''}')} â€¢ ${priorityLabel('${m['priority'] ?? ''}')}\n${m['description'] ?? ''}',
+                              '${statusLabel('${m['status'] ?? ''}')} • ${priorityLabel('${m['priority'] ?? ''}')}\n${m['description'] ?? ''}',
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -179,8 +179,8 @@ class _ListPageState extends State<ListPage> {
               icon: const Icon(Icons.add),
               label: Text(
                 complaint
-                    ? 'طھط³ط¬ظٹظ„ ط´ظƒظˆظ‰ ط¬ط¯ظٹط¯ط©'
-                    : 'ط¥ظ†ط´ط§ط، ظ…ظ‡ظ…ط© ظ…ظٹط¯ط§ظ†ظٹط©',
+                    ? 'تسجيل شكوى جديدة'
+                    : 'إنشاء مهمة ميدانية',
               ),
             ),
           ),
@@ -218,7 +218,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
   Future<void> gps() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        throw Exception('ط®ط¯ظ…ط© ط§ظ„ظ…ظˆظ‚ط¹ ط؛ظٹط± ظ…ظپط¹ظ„ط©.');
+        throw Exception('خدمة الموقع غير مفعلة.');
       }
       var p = await Geolocator.checkPermission();
       if (p == LocationPermission.denied) {
@@ -226,7 +226,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
       }
       if (p == LocationPermission.denied ||
           p == LocationPermission.deniedForever) {
-        throw Exception('ظ„ظ… ظٹطھظ… ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„ظ…ظˆظ‚ط¹.');
+        throw Exception('لم يتم السماح بالموقع.');
       }
       final x = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -265,7 +265,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
     if (title.text.trim().isEmpty || description.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('ط§ظ„ط¹ظ†ظˆط§ظ† ظˆط§ظ„ظˆطµظپ ظ…ط·ظ„ظˆط¨ط§ظ†.'),
+          content: Text('العنوان والوصف مطلوبان.'),
         ),
       );
       return;
@@ -291,8 +291,8 @@ class _ComplaintFormState extends State<ComplaintForm> {
         SnackBar(
           content: Text(
             r['queued'] == true
-                ? 'طھظ… ط­ظپط¸ظ‡ط§ ظ„ظ„ظ…ط²ط§ظ…ظ†ط© ظ„ط§ط­ظ‚ظ‹ط§'
-                : 'طھظ… طھط³ط¬ظٹظ„ ط§ظ„ط´ظƒظˆظ‰',
+                ? 'تم حفظها للمزامنة لاحقًا'
+                : 'تم تسجيل الشكوى',
           ),
         ),
       );
@@ -308,7 +308,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
 
   @override
   Widget build(BuildContext c) => AlertDialog(
-    title: const Text('طھط³ط¬ظٹظ„ ط´ظƒظˆظ‰'),
+    title: const Text('تسجيل شكوى'),
     content: SizedBox(
       width: 500,
       child: SingleChildScrollView(
@@ -317,44 +317,44 @@ class _ComplaintFormState extends State<ComplaintForm> {
           children: [
             TextField(
               controller: title,
-              decoration: const InputDecoration(labelText: 'ط§ظ„ط¹ظ†ظˆط§ظ† *'),
+              decoration: const InputDecoration(labelText: 'العنوان *'),
             ),
             TextField(
               controller: description,
               minLines: 3,
               maxLines: 6,
               decoration: const InputDecoration(
-                labelText: 'ظˆطµظپ ط§ظ„ظ…ط´ظƒظ„ط© *',
+                labelText: 'وصف المشكلة *',
               ),
             ),
             DropdownButtonFormField<String>(
               value: priority,
-              decoration: const InputDecoration(labelText: 'ط§ظ„ط£ظˆظ„ظˆظٹط©'),
+              decoration: const InputDecoration(labelText: 'الأولوية'),
               items: const [
-                DropdownMenuItem(value: 'low', child: Text('ظ…ظ†ط®ظپط¶ط©')),
-                DropdownMenuItem(value: 'medium', child: Text('ظ…طھظˆط³ط·ط©')),
-                DropdownMenuItem(value: 'high', child: Text('ط¹ط§ظ„ظٹط©')),
-                DropdownMenuItem(value: 'urgent', child: Text('ط·ط§ط±ط¦ط©')),
+                DropdownMenuItem(value: 'low', child: Text('منخفضة')),
+                DropdownMenuItem(value: 'medium', child: Text('متوسطة')),
+                DropdownMenuItem(value: 'high', child: Text('عالية')),
+                DropdownMenuItem(value: 'urgent', child: Text('طارئة')),
               ],
               onChanged: (v) => setState(() => priority = v ?? 'medium'),
             ),
             TextField(
               controller: name,
               decoration: const InputDecoration(
-                labelText: 'ط§ط³ظ… ط§ظ„ظ…ط¨ظ„ظ‘ط؛',
+                labelText: 'اسم المبلغ',
               ),
             ),
             TextField(
               controller: phone,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                labelText: 'ظ‡ط§طھظپ ط§ظ„ظ…ط¨ظ„ظ‘ط؛',
+                labelText: 'هاتف المبلغ',
               ),
             ),
             TextField(
               controller: address,
               decoration: const InputDecoration(
-                labelText: 'ط§ظ„ط¹ظ†ظˆط§ظ† / ط§ظ„ظ…ظˆظ‚ط¹ ط§ظ„ظ†طµظٹ',
+                labelText: 'العنوان / الموقع النصي',
               ),
             ),
             Row(
@@ -363,7 +363,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
                   child: TextField(
                     controller: lat,
                     decoration: const InputDecoration(
-                      labelText: 'ط®ط· ط§ظ„ط¹ط±ط¶',
+                      labelText: 'خط العرض',
                     ),
                   ),
                 ),
@@ -372,7 +372,7 @@ class _ComplaintFormState extends State<ComplaintForm> {
                   child: TextField(
                     controller: lng,
                     decoration: const InputDecoration(
-                      labelText: 'ط®ط· ط§ظ„ط·ظˆظ„',
+                      labelText: 'خط الطول',
                     ),
                   ),
                 ),
@@ -384,12 +384,12 @@ class _ComplaintFormState extends State<ComplaintForm> {
                 OutlinedButton.icon(
                   onPressed: busy ? null : pick,
                   icon: const Icon(Icons.map),
-                  label: const Text('طھط­ط¯ظٹط¯ ط¹ظ„ظ‰ ط§ظ„ط®ط±ظٹط·ط©'),
+                  label: const Text('تحديد على الخريطة'),
                 ),
                 OutlinedButton.icon(
                   onPressed: busy ? null : gps,
                   icon: const Icon(Icons.my_location),
-                  label: const Text('ظ…ظˆظ‚ط¹ ط§ظ„ظ‡ط§طھظپ'),
+                  label: const Text('موقع الهاتف'),
                 ),
               ],
             ),
@@ -400,11 +400,11 @@ class _ComplaintFormState extends State<ComplaintForm> {
     actions: [
       TextButton(
         onPressed: busy ? null : () => Navigator.pop(context),
-        child: const Text('ط¥ظ„ط؛ط§ط،'),
+        child: const Text('إلغاء'),
       ),
       FilledButton(
         onPressed: busy ? null : save,
-        child: busy ? const CircularProgressIndicator() : const Text('ط­ظپط¸'),
+        child: busy ? const CircularProgressIndicator() : const Text('حفظ'),
       ),
     ],
   );
@@ -481,7 +481,7 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
     if (title.text.trim().isEmpty || description.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('ط§ظ„ط¹ظ†ظˆط§ظ† ظˆط§ظ„ظˆطµظپ ظ…ط·ظ„ظˆط¨ط§ظ†.'),
+          content: Text('العنوان والوصف مطلوبان.'),
         ),
       );
       return;
@@ -506,8 +506,8 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
         SnackBar(
           content: Text(
             r['queued'] == true
-                ? 'طھظ… ط­ظپط¸ ط§ظ„ظ…ظ‡ظ…ط© ظ„ظ„ظ…ط²ط§ظ…ظ†ط© ظ„ط§ط­ظ‚ظ‹ط§'
-                : 'طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ظ…ظ‡ظ…ط©',
+                ? 'تم حفظ المهمة للمزامنة لاحقًا'
+                : 'تم إنشاء المهمة',
           ),
         ),
       );
@@ -526,7 +526,7 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
     final cs = complaints?.items ?? [];
     final us = users?.items ?? [];
     return AlertDialog(
-      title: const Text('ط¥ظ†ط´ط§ط، ظ…ظ‡ظ…ط© ظ…ظٹط¯ط§ظ†ظٹط©'),
+      title: const Text('إنشاء مهمة ميدانية'),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
@@ -536,38 +536,38 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
               TextField(
                 controller: title,
                 decoration: const InputDecoration(
-                  labelText: 'ط§ظ„ط¹ظ†ظˆط§ظ† *',
+                  labelText: 'العنوان *',
                 ),
               ),
               TextField(
                 controller: description,
                 minLines: 3,
                 maxLines: 5,
-                decoration: const InputDecoration(labelText: 'ط§ظ„ظˆطµظپ *'),
+                decoration: const InputDecoration(labelText: 'الوصف *'),
               ),
               DropdownButtonFormField<String>(
                 value: status,
-                decoration: const InputDecoration(labelText: 'ط§ظ„ط­ط§ظ„ط©'),
+                decoration: const InputDecoration(labelText: 'الحالة'),
                 items: const [
                   DropdownMenuItem(
                     value: 'pending',
-                    child: Text('ظ‚ظٹط¯ ط§ظ„ط§ظ†طھط¸ط§ط±'),
+                    child: Text('قيد الانتظار'),
                   ),
                   DropdownMenuItem(
                     value: 'assigned',
-                    child: Text('ظ…ط³ظ†ط¯ط©'),
+                    child: Text('مسندة'),
                   ),
                   DropdownMenuItem(
                     value: 'in_progress',
-                    child: Text('ظ‚ظٹط¯ ط§ظ„طھظ†ظپظٹط°'),
+                    child: Text('قيد التنفيذ'),
                   ),
                   DropdownMenuItem(
                     value: 'completed',
-                    child: Text('ظ…ظƒطھظ…ظ„ط©'),
+                    child: Text('مكتملة'),
                   ),
                   DropdownMenuItem(
                     value: 'cancelled',
-                    child: Text('ظ…ظ„ط؛ط§ط©'),
+                    child: Text('ملغاة'),
                   ),
                 ],
                 onChanged: (v) => setState(() => status = v ?? 'pending'),
@@ -575,33 +575,33 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
               DropdownButtonFormField<String>(
                 value: priority,
                 decoration: const InputDecoration(
-                  labelText: 'ط§ظ„ط£ظˆظ„ظˆظٹط©',
+                  labelText: 'الأولوية',
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'low', child: Text('ظ…ظ†ط®ظپط¶ط©')),
+                  DropdownMenuItem(value: 'low', child: Text('منخفضة')),
                   DropdownMenuItem(
                     value: 'medium',
-                    child: Text('ظ…طھظˆط³ط·ط©'),
+                    child: Text('متوسطة'),
                   ),
-                  DropdownMenuItem(value: 'high', child: Text('ط¹ط§ظ„ظٹط©')),
-                  DropdownMenuItem(value: 'urgent', child: Text('ط·ط§ط±ط¦ط©')),
+                  DropdownMenuItem(value: 'high', child: Text('عالية')),
+                  DropdownMenuItem(value: 'urgent', child: Text('طارئة')),
                 ],
                 onChanged: (v) => setState(() => priority = v ?? 'medium'),
               ),
               DropdownButtonFormField<int?>(
                 value: complaintId,
                 decoration: const InputDecoration(
-                  labelText: 'ط±ط¨ط· ط¨ط´ظƒظˆظ‰',
+                  labelText: 'ربط بشكوى',
                 ),
                 items: [
                   const DropdownMenuItem<int?>(
                     value: null,
-                    child: Text('ط¨ط¯ظˆظ† ط´ظƒظˆظ‰'),
+                    child: Text('بدون شكوى'),
                   ),
                   ...cs.map(
                     (x) => DropdownMenuItem<int?>(
                       value: (x['id'] as num).toInt(),
-                      child: Text('${x['complaint_number']} â€” ${x['title']}'),
+                      child: Text('${x['complaint_number']} — ${x['title']}'),
                     ),
                   ),
                 ],
@@ -611,12 +611,12 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
                 DropdownButtonFormField<int?>(
                   value: assignedTo,
                   decoration: const InputDecoration(
-                    labelText: 'ط§ظ„ظ…ظˆط¸ظپ ط§ظ„ظ…ط³ظ†ط¯ ط¥ظ„ظٹظ‡',
+                    labelText: 'الموظف المسند إليه',
                   ),
                   items: [
                     const DropdownMenuItem<int?>(
                       value: null,
-                      child: Text('ط¨ط¯ظˆظ† ط¥ط³ظ†ط§ط¯'),
+                      child: Text('بدون إسناد'),
                     ),
                     ...us
                         .where((x) => x['is_active'] == true)
@@ -634,14 +634,14 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
                   onPressed: () => setState(() => assignedTo = me?.id),
                   icon: const Icon(Icons.person),
                   label: Text(
-                    'ط¥ط³ظ†ط§ط¯ ظ„ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ط­ط§ظ„ظٹ: ${me?.name ?? ''}',
+                    'إسناد للمستخدم الحالي: ${me?.name ?? ''}',
                   ),
                 ),
               TextField(
                 controller: notes,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'ظ…ظ„ط§ط­ط¸ط§طھ'),
+                decoration: const InputDecoration(labelText: 'ملاحظات'),
               ),
               Row(children: [
                 Expanded(child: TextField(controller: lat, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: const InputDecoration(labelText: 'خط العرض'))),
@@ -660,12 +660,12 @@ class _WorkOrderFormState extends State<WorkOrderForm> {
       actions: [
         TextButton(
           onPressed: busy ? null : () => Navigator.pop(context),
-          child: const Text('ط¥ظ„ط؛ط§ط،'),
+          child: const Text('إلغاء'),
         ),
         FilledButton(
           onPressed: busy ? null : save,
           child:
-              busy ? const CircularProgressIndicator() : const Text('ط­ظپط¸'),
+              busy ? const CircularProgressIndicator() : const Text('حفظ'),
         ),
       ],
     );
@@ -724,26 +724,26 @@ class _ComplaintDetailsPageState extends State<ComplaintDetailsPage> {
         children: [
           InfoCard(
             rows: {
-              'ط§ظ„ط¹ظ†ظˆط§ظ†': '${x['title'] ?? ''}',
-              'ط§ظ„ط­ط§ظ„ط©': statusLabel('${x['status'] ?? ''}'),
-              'ط§ظ„ط£ظˆظ„ظˆظٹط©': priorityLabel('${x['priority'] ?? ''}'),
-              'ط§ظ„ظˆطµظپ': '${x['description'] ?? ''}',
-              'ط§ظ„ظ…ط¨ظ„ظ‘ط؛': '${x['contact_name'] ?? '-'}',
-              'ط§ظ„ظ‡ط§طھظپ': '${x['contact_phone'] ?? '-'}',
-              'ط¹ظ†ظˆط§ظ† ط§ظ„ظ…ظˆظ‚ط¹': '${x['address'] ?? '-'}',
-              'ط§ظ„ط¥ط­ط¯ط§ط«ظٹط§طھ':
+              'العنوان': '${x['title'] ?? ''}',
+              'الحالة': statusLabel('${x['status'] ?? ''}'),
+              'الأولوية': priorityLabel('${x['priority'] ?? ''}'),
+              'الوصف': '${x['description'] ?? ''}',
+              'المبلغ': '${x['contact_name'] ?? '-'}',
+              'الهاتف': '${x['contact_phone'] ?? '-'}',
+              'عنوان الموقع': '${x['address'] ?? '-'}',
+              'الإحداثيات':
                   '${x['latitude'] ?? '-'}, ${x['longitude'] ?? '-'}',
             },
           ),
           if (w.isNotEmpty)
             Card(
               child: ExpansionTile(
-                title: Text('ط§ظ„ظ…ظ‡ط§ظ… ط§ظ„ظ…ط±طھط¨ط·ط© (${w.length})'),
+                title: Text('المهام المرتبطة (${w.length})'),
                 children: [
                   ...w.map(
                     (a) => ListTile(
                       title: Text(
-                        '${a['work_order_number']} â€” ${a['title']}',
+                        '${a['work_order_number']} — ${a['title']}',
                       ),
                       subtitle: Text(statusLabel('${a['status']}')),
                     ),
@@ -756,7 +756,7 @@ class _ComplaintDetailsPageState extends State<ComplaintDetailsPage> {
             FilledButton.icon(
               onPressed: convert,
               icon: const Icon(Icons.engineering),
-              label: const Text('طھط­ظˆظٹظ„ ط§ظ„ط´ظƒظˆظ‰ ط¥ظ„ظ‰ ظ…ظ‡ظ…ط©'),
+              label: const Text('تحويل الشكوى إلى مهمة'),
             ),
         ],
       ),
@@ -807,25 +807,25 @@ class _WorkOrderDetailsPageState extends State<WorkOrderDetailsPage> {
         children: [
           InfoCard(
             rows: {
-              'ط§ظ„ط¹ظ†ظˆط§ظ†': '${x['title'] ?? ''}',
-              'ط§ظ„ط­ط§ظ„ط©': statusLabel('${x['status'] ?? ''}'),
-              'ط§ظ„ط£ظˆظ„ظˆظٹط©': priorityLabel('${x['priority'] ?? ''}'),
-              'ط§ظ„ظˆطµظپ': '${x['description'] ?? ''}',
-              'ط§ظ„ظ…ط³ظ†ط¯ ط¥ظ„ظٹظ‡':
+              'العنوان': '${x['title'] ?? ''}',
+              'الحالة': statusLabel('${x['status'] ?? ''}'),
+              'الأولوية': priorityLabel('${x['priority'] ?? ''}'),
+              'الوصف': '${x['description'] ?? ''}',
+              'المسند إليه':
                   '${(x['assigned_to'] as Map?)?['name'] ?? '-'}',
-              'ظ…ظ„ط§ط­ط¸ط§طھ': '${x['notes'] ?? '-'}',
-              'ط¨ط¯ط£طھ': '${x['started_at'] ?? '-'}',
-              'ط§ظƒطھظ…ظ„طھ': '${x['completed_at'] ?? '-'}',
+              'ملاحظات': '${x['notes'] ?? '-'}',
+              'بدأت': '${x['started_at'] ?? '-'}',
+              'اكتملت': '${x['completed_at'] ?? '-'}',
             },
           ),
           if (q.isNotEmpty)
             Card(
               child: ExpansionTile(
-                title: Text('ط§ظ„ط´ظƒط§ظˆظ‰ ط§ظ„ظ…ط±طھط¨ط·ط© (${q.length})'),
+                title: Text('الشكاوى المرتبطة (${q.length})'),
                 children: [
                   ...q.map(
                     (a) => ListTile(
-                      title: Text('${a['complaint_number']} â€” ${a['title']}'),
+                      title: Text('${a['complaint_number']} — ${a['title']}'),
                       subtitle: Text(statusLabel('${a['status']}')),
                     ),
                   ),
@@ -930,7 +930,7 @@ class _ConvertDialogState extends State<ConvertDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'ظٹط¬ط¨ طھط­ط¯ظٹط¯ ط§ظ„ظ…ظˆط¸ظپ ط§ظ„ظ…ط³ظ†ط¯ ط¥ظ„ظٹظ‡.',
+            'يجب تحديد الموظف المسند إليه.',
           ),
         ),
       );
@@ -961,7 +961,7 @@ class _ConvertDialogState extends State<ConvertDialog> {
   Widget build(BuildContext c) {
     final us = users?.items ?? [];
     return AlertDialog(
-      title: const Text('طھط­ظˆظٹظ„ ط§ظ„ط´ظƒظˆظ‰ ط¥ظ„ظ‰ ظ…ظ‡ظ…ط©'),
+      title: const Text('تحويل الشكوى إلى مهمة'),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
@@ -971,7 +971,7 @@ class _ConvertDialogState extends State<ConvertDialog> {
               TextField(
                 controller: title,
                 decoration: const InputDecoration(
-                  labelText: 'ط¹ظ†ظˆط§ظ† ط§ظ„ظ…ظ‡ظ…ط©',
+                  labelText: 'عنوان المهمة',
                 ),
               ),
               TextField(
@@ -979,22 +979,22 @@ class _ConvertDialogState extends State<ConvertDialog> {
                 minLines: 3,
                 maxLines: 5,
                 decoration: const InputDecoration(
-                  labelText: 'ظˆطµظپ ط§ظ„ظ…ظ‡ظ…ط©',
+                  labelText: 'وصف المهمة',
                 ),
               ),
               DropdownButtonFormField<String>(
                 value: priority,
                 decoration: const InputDecoration(
-                  labelText: 'ط§ظ„ط£ظˆظ„ظˆظٹط©',
+                  labelText: 'الأولوية',
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'low', child: Text('ظ…ظ†ط®ظپط¶ط©')),
+                  DropdownMenuItem(value: 'low', child: Text('منخفضة')),
                   DropdownMenuItem(
                     value: 'medium',
-                    child: Text('ظ…طھظˆط³ط·ط©'),
+                    child: Text('متوسطة'),
                   ),
-                  DropdownMenuItem(value: 'high', child: Text('ط¹ط§ظ„ظٹط©')),
-                  DropdownMenuItem(value: 'urgent', child: Text('ط·ط§ط±ط¦ط©')),
+                  DropdownMenuItem(value: 'high', child: Text('عالية')),
+                  DropdownMenuItem(value: 'urgent', child: Text('طارئة')),
                 ],
                 onChanged: (v) => setState(() => priority = v ?? priority),
               ),
@@ -1002,7 +1002,7 @@ class _ConvertDialogState extends State<ConvertDialog> {
                 DropdownButtonFormField<int>(
                   value: assignedTo,
                   decoration: const InputDecoration(
-                    labelText: 'ط§ظ„ظ…ظˆط¸ظپ *',
+                    labelText: 'الموظف *',
                   ),
                   items:
                       us
@@ -1017,12 +1017,12 @@ class _ConvertDialogState extends State<ConvertDialog> {
                   onChanged: (v) => setState(() => assignedTo = v),
                 )
               else
-                Text('ط§ظ„ظ…ط³ظ†ط¯ ط¥ظ„ظٹظ‡: ${me?.name ?? '-'}'),
+                Text('المسند إليه: ${me?.name ?? '-'}'),
               TextField(
                 controller: notes,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'ظ…ظ„ط§ط­ط¸ط§طھ'),
+                decoration: const InputDecoration(labelText: 'ملاحظات'),
               ),
             ],
           ),
@@ -1031,14 +1031,14 @@ class _ConvertDialogState extends State<ConvertDialog> {
       actions: [
         TextButton(
           onPressed: busy ? null : () => Navigator.pop(context),
-          child: const Text('ط¥ظ„ط؛ط§ط،'),
+          child: const Text('إلغاء'),
         ),
         FilledButton(
           onPressed: busy ? null : save,
           child:
               busy
                   ? const CircularProgressIndicator()
-                  : const Text('طھط­ظˆظٹظ„ ظˆط¥ظ†ط´ط§ط، ط§ظ„ظ…ظ‡ظ…ط©'),
+                  : const Text('تحويل وإنشاء المهمة'),
         ),
       ],
     );
@@ -1055,7 +1055,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
   LatLng? selected;
   @override
   Widget build(BuildContext c) => Scaffold(
-    appBar: AppBar(title: const Text('طھط­ط¯ظٹط¯ ظ…ظˆظ‚ط¹ ط§ظ„ط´ظƒظˆظ‰')),
+    appBar: AppBar(title: const Text('تحديد موقع الشكوى')),
     body: FlutterMap(
       options: MapOptions(
         initialCenter: const LatLng(31.42, 34.36),
@@ -1086,7 +1086,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             : FloatingActionButton.extended(
               onPressed: () => Navigator.pop(context, selected),
               icon: const Icon(Icons.check),
-              label: const Text('ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ظˆظ‚ط¹'),
+              label: const Text('اعتماد الموقع'),
             ),
   );
 }
@@ -1131,7 +1131,7 @@ class _MapPageState extends State<MapPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    complaint ? 'ط´ظƒظˆظ‰' : 'ظ…ظ‡ظ…ط© ظ…ظٹط¯ط§ظ†ظٹط©',
+                    complaint ? 'شكوى' : 'مهمة ميدانية',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   Text(
@@ -1143,17 +1143,17 @@ class _MapPageState extends State<MapPage> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text('${m['description'] ?? ''}'),
-                  Text('ط§ظ„ط­ط§ظ„ط©: ${statusLabel('${m['status'] ?? ''}')}'),
+                  Text('الحالة: ${statusLabel('${m['status'] ?? ''}')}'),
                   Text(
-                    'ط§ظ„ط£ظˆظ„ظˆظٹط©: ${priorityLabel('${m['priority'] ?? ''}')}',
+                    'الأولوية: ${priorityLabel('${m['priority'] ?? ''}')}',
                   ),
-                  Text('ط§ظ„ظ…ط³ظ†ط¯ ط¥ظ„ظٹظ‡: ${m['assigned_to'] ?? '-'}'),
+                  Text('المسند إليه: ${m['assigned_to'] ?? '-'}'),
                   if (m['address'] != null)
-                    Text('ط§ظ„ط¹ظ†ظˆط§ظ†: ${m['address']}'),
+                    Text('العنوان: ${m['address']}'),
                   const SizedBox(height: 10),
                   FilledButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('ط¥ط؛ظ„ط§ظ‚'),
+                    child: const Text('إغلاق'),
                   ),
                 ],
               ),
@@ -1233,7 +1233,7 @@ class _MapPageState extends State<MapPage> {
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Text(
-                'ط§ظ„ط´ظƒط§ظˆظ‰: ${complaints.length} | ط§ظ„ظ…ظ‡ط§ظ…: ${orders.length}',
+                'الشكاوى: ${complaints.length} | المهام: ${orders.length}',
               ),
             ),
           ),
@@ -1274,14 +1274,14 @@ class ProfilePage extends StatelessWidget {
       ),
       Card(
         child: ListTile(
-          title: const Text('ط§ظ„ط£ط¯ظˆط§ط±'),
-          subtitle: Text(user.roles.join('طŒ ')),
+          title: const Text('الأدوار'),
+          subtitle: Text(user.roles.join('، ')),
         ),
       ),
       Card(
         child: ListTile(
-          title: const Text('ط§ظ„طµظ„ط§ط­ظٹط§طھ'),
-          subtitle: Text(user.permissions.join('طŒ ')),
+          title: const Text('الصلاحيات'),
+          subtitle: Text(user.permissions.join('، ')),
         ),
       ),
       const SizedBox(height: 20),
@@ -1291,7 +1291,7 @@ class ProfilePage extends StatelessWidget {
           onLogout();
         },
         icon: const Icon(Icons.logout),
-        label: const Text('طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬'),
+        label: const Text('تسجيل الخروج'),
       ),
     ],
   );
