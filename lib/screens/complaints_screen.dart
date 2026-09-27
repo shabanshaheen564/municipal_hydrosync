@@ -180,7 +180,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                       subtitle: 'لم يتم تسجيل أي شكاوى حتى الآن',
                       icon: Icons.report_off_outlined,
                       action: FilledButton.icon(
-                        onPressed: () {},
+                        onPressed: _createComplaint,
                         icon: const Icon(Icons.add),
                         label: const Text('تسجيل شكوى'),
                       ),
