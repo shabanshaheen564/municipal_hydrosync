@@ -68,7 +68,29 @@ class ComplaintManager extends StatelessWidget {
       if ('${data['solution'] ?? ''}'.isNotEmpty) Text('الحل: ${data['solution']}'),
       if (orders.isNotEmpty) ...[const SizedBox(height: 12), Text('المهام المرتبطة', style: Theme.of(context).textTheme.titleMedium), ...orders.map((x) => ListTile(dense: true, title: Text('${x['work_order_number']} — ${x['title']}'), subtitle: Text(statusLabel('${x['status']}'))))],
       const SizedBox(height: 14),
-      Row(children: [Expanded(child: OutlinedButton.icon(onPressed: () async { final ok = await showDialog<bool>(context: context, builder: (_) => ComplaintEditDialog(api: api, data: data)); if (ok == true && context.mounted) Navigator.pop(context, true); }, icon: const Icon(Icons.edit), label: const Text('تعديل'))), const SizedBox(width: 8), if (data['status'] != 'closed' && data['status'] != 'cancelled') Expanded(child: FilledButton.icon(onPressed: () async { final ok = await showDialog<bool>(context: context, builder: (_) => ConvertDialog(api: api, data: data)); if (ok == true && context.mounted) Navigator.pop(context, true); }, icon: const Icon(Icons.engineering), label: const Text('تحويل إلى مهمة')))]),
+      Row(children: [
+        Expanded(child: OutlinedButton.icon(onPressed: () async { final ok = await showDialog<bool>(context: context, builder: (_) => ComplaintEditDialog(api: api, data: data)); if (ok == true && context.mounted) Navigator.pop(context, true); }, icon: const Icon(Icons.edit), label: const Text('تعديل'))),
+        const SizedBox(width: 8),
+        Expanded(child: OutlinedButton.icon(onPressed: () async {
+          final linked = orders.isNotEmpty;
+          final confirmed = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(
+            title: const Text('حذف الشكوى'),
+            content: Text(linked ? 'هذه الشكوى مرتبطة بمهمة. سيتم فك الارتباط وحذف الشكوى فقط. هل تريد المتابعة؟' : 'هل أنت متأكد من حذف هذه الشكوى؟'),
+            actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')), FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('حذف'))],
+          ));
+          if (confirmed != true || !context.mounted) return;
+          try {
+            await api.delete('/complaints/' + data['id'].toString());
+            if (context.mounted) Navigator.pop(context, true);
+          } catch (e) {
+            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+          }
+        }, icon: const Icon(Icons.delete_outline), label: const Text('حذف'))),
+        if (data['status'] != 'closed' && data['status'] != 'cancelled') ...[
+          const SizedBox(width: 8),
+          Expanded(child: FilledButton.icon(onPressed: () async { final ok = await showDialog<bool>(context: context, builder: (_) => ConvertDialog(api: api, data: data)); if (ok == true && context.mounted) Navigator.pop(context, true); }, icon: const Icon(Icons.engineering), label: const Text('تحويل إلى مهمة')))
+        ]
+      ]),
     ]))));
   }
 }
@@ -83,7 +105,26 @@ class WorkOrderManager extends StatelessWidget {
       Text('${data['title'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
       const SizedBox(height: 12), Text('الحالة: ${statusLabel('${data['status'] ?? ''}')}'), Text('الأولوية: ${priorityLabel('${data['priority'] ?? ''}')}'), Text('الوصف: ${data['description'] ?? '-'}'), Text('المسند إليه: ${(data['assigned_to'] as Map?)?['name'] ?? '-'}'), Text('ملاحظات: ${data['notes'] ?? '-'}'),
       if (complaints.isNotEmpty) ...[const SizedBox(height: 12), Text('الشكاوى المرتبطة', style: Theme.of(context).textTheme.titleMedium), ...complaints.map((x) => ListTile(dense: true, title: Text('${x['complaint_number']} — ${x['title']}'), subtitle: Text(statusLabel('${x['status']}'))))],
-      const SizedBox(height: 14), SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () async { final ok = await showDialog<bool>(context: context, builder: (_) => WorkOrderEditDialog(api: api, data: data)); if (ok == true && context.mounted) Navigator.pop(context, true); }, icon: const Icon(Icons.edit), label: const Text('تحديث المهمة'))),
+      const SizedBox(height: 14),
+      Row(children: [
+        Expanded(child: OutlinedButton.icon(onPressed: () async { final ok = await showDialog<bool>(context: context, builder: (_) => WorkOrderEditDialog(api: api, data: data)); if (ok == true && context.mounted) Navigator.pop(context, true); }, icon: const Icon(Icons.edit), label: const Text('تحديث المهمة'))),
+        const SizedBox(width: 8),
+        Expanded(child: OutlinedButton.icon(onPressed: () async {
+          final linked = complaints.isNotEmpty;
+          final confirmed = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(
+            title: const Text('حذف المهمة'),
+            content: Text(linked ? 'هذه المهمة مرتبطة بشكوى. سيتم فك الارتباط وحذف المهمة فقط. هل تريد المتابعة؟' : 'هل أنت متأكد من حذف هذه المهمة؟'),
+            actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')), FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('حذف'))],
+          ));
+          if (confirmed != true || !context.mounted) return;
+          try {
+            await api.delete('/work-orders/' + data['id'].toString());
+            if (context.mounted) Navigator.pop(context, true);
+          } catch (e) {
+            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+          }
+        }, icon: const Icon(Icons.delete_outline), label: const Text('حذف'))),
+      ]),
     ]))));
   }
 }
