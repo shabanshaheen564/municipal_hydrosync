@@ -4,13 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../api.dart';
+import '../sync_service.dart';
 import '../utils.dart';
 import '../mobile_management.dart';
 
 class MapScreen extends StatefulWidget {
   final ApiClient api;
+  final SyncService syncService;
 
-  const MapScreen({super.key, required this.api});
+  const MapScreen({super.key, required this.api, required this.syncService});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -128,12 +130,17 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    widget.syncService.revision.addListener(_syncRevisionChanged);
     load();
   }
 
-  Future<void> load() async {
+  void _syncRevisionChanged() {
+    if (mounted) load(forceRefresh: true);
+  }
+
+  Future<void> load({bool forceRefresh = false}) async {
     try {
-      final x = await widget.api.operationalMap();
+      final x = await widget.api.operationalMap(forceRefresh: forceRefresh);
       if (mounted) setState(() => data = x);
     } catch (e) {
       if (mounted) {
@@ -146,6 +153,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    widget.syncService.revision.removeListener(_syncRevisionChanged);
     searchController.dispose();
     mapController.dispose();
     super.dispose();
