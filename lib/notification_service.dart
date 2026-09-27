@@ -65,50 +65,53 @@ class NotificationService {
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    await initializeLocalOnly();
+    try {
+      await initializeLocalOnly();
 
-    if (!kIsWeb) {
-      try {
-        await Firebase.initializeApp();
-        final messaging = FirebaseMessaging.instance;
-        await messaging.setAutoInitEnabled(true);
-        await messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-
-        if (!_fcmListenersAttached) {
-          FirebaseMessaging.onBackgroundMessage(
-            firebaseMessagingBackgroundHandler,
+      if (!kIsWeb) {
+        try {
+          await Firebase.initializeApp();
+          final messaging = FirebaseMessaging.instance;
+          await messaging.setAutoInitEnabled(true);
+          await messaging.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
           );
-          FirebaseMessaging.onMessage.listen((message) async {
-            final notification = message.notification;
-            final title = notification?.title ?? message.data['title'];
-            final body = notification?.body ?? message.data['body'];
-            if (title != null && body != null) {
-              await show(
-                title: '$title',
-                body: '$body',
-                payload: '${message.data['type'] ?? 'general'}',
-              );
-            }
-          });
-          _fcmListenersAttached = true;
-        }
 
-        final token = await messaging.getToken();
-        if (token != null && token.isNotEmpty) {
-          await _registerToken(token);
+          if (!_fcmListenersAttached) {
+            FirebaseMessaging.onBackgroundMessage(
+              firebaseMessagingBackgroundHandler,
+            );
+            FirebaseMessaging.onMessage.listen((message) async {
+              final notification = message.notification;
+              final title = notification?.title ?? message.data['title'];
+              final body = notification?.body ?? message.data['body'];
+              if (title != null && body != null) {
+                await show(
+                  title: '$title',
+                  body: '$body',
+                  payload: '${message.data['type'] ?? 'general'}',
+                );
+              }
+            });
+            _fcmListenersAttached = true;
+          }
+
+          final token = await messaging.getToken();
+          if (token != null && token.isNotEmpty) {
+            await _registerToken(token);
+          }
+          messaging.onTokenRefresh.listen(_registerToken);
+        } catch (_) {
+          // Firebase is optional at startup; the app must remain usable.
         }
-        messaging.onTokenRefresh.listen(_registerToken);
-      } catch (_) {
-        // Local notifications must continue to work even when Firebase has
-        // not been configured on this installation yet.
       }
+    } catch (_) {
+      // Notification setup must never block the application startup.
+    } finally {
+      _initialized = true;
     }
-
-    _initialized = true;
   }
 
   /// Registers the current FCM token after authentication succeeds.
