@@ -37,7 +37,6 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     unawaited(NotificationService.initialize());
     boot();
   }
@@ -295,6 +294,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     connectivity = ConnectivityService();
     connectivity.init();
 
