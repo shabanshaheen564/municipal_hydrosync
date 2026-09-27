@@ -117,14 +117,14 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final email = TextEditingController();
+  final login = TextEditingController();
   final password = TextEditingController();
   bool busy = false;
   String? error;
 
   @override
   void dispose() {
-    email.dispose();
+    login.dispose();
     password.dispose();
     super.dispose();
   }
@@ -136,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
       error = null;
     });
     try {
-      final d = await widget.api.login(email.text.trim(), password.text);
+      final d = await widget.api.login(login.text.trim(), password.text);
       if (mounted) {
         await NotificationService.registerCurrentToken();
         widget.onLogin(SessionUser.fromJson(d['user']));
@@ -191,11 +191,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 26),
                     TextField(
-                      controller: email,
-                      keyboardType: TextInputType.emailAddress,
+                      controller: login,
+                      keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
-                        labelText: 'البريد الإلكتروني',
-                        prefixIcon: Icon(Icons.email_outlined),
+                        labelText: 'اسم المستخدم أو البريد الإلكتروني',
+                        prefixIcon: Icon(Icons.person_outline),
                       ),
                     ),
                     const SizedBox(height: 12),
