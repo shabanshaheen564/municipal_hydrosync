@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../api.dart';
 import '../utils.dart';
+import '../mobile_management.dart';
 
 class MapScreen extends StatefulWidget {
   final ApiClient api;
@@ -255,7 +256,21 @@ class _MapScreenState extends State<MapScreen> {
             width: 48,
             height: 48,
             child: GestureDetector(
-              onTap: () => _showFeatureDetails(m, true),
+              onTap: () async {
+                try {
+                  final fresh = await widget.api.getOne('/complaints/\${m['id']}');
+                  if (!mounted) return;
+                  await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => ComplaintManager(api: widget.api, data: fresh),
+                  );
+                  await load();
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\$e')));
+                }
+              },
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.red,
@@ -293,7 +308,21 @@ class _MapScreenState extends State<MapScreen> {
             width: 48,
             height: 48,
             child: GestureDetector(
-              onTap: () => _showFeatureDetails(m, false),
+              onTap: () async {
+                try {
+                  final fresh = await widget.api.getOne('/work-orders/\${m['id']}');
+                  if (!mounted) return;
+                  await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => WorkOrderManager(api: widget.api, data: fresh),
+                  );
+                  await load();
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\$e')));
+                }
+              },
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.orange,
