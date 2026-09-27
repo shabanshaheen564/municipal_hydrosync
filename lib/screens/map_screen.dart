@@ -151,71 +151,6 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  void _showFeatureDetails(Map<String, dynamic> m, bool isComplaint) {
-    showModalBottomSheet(
-      context: context,
-      builder:
-          (_) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isComplaint ? 'شكوى' : 'مهمة ميدانية',
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${m['number'] ?? '-'}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${m['title'] ?? ''}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDetailRow(
-                      'الحالة',
-                      statusLabel('${m['status'] ?? ''}'),
-                    ),
-                    _buildDetailRow(
-                      'الأولوية',
-                      priorityLabel('${m['priority'] ?? ''}'),
-                    ),
-                    if (m['assigned_to'] != null)
-                      _buildDetailRow(
-                        'المسؤول',
-                        m['assigned_to'] is Map
-                            ? m['assigned_to']['name'] ?? '-'
-                            : '${m['assigned_to']}',
-                      ),
-                    if (m['description'] != null &&
-                        (m['description'] as String).isNotEmpty)
-                      _buildDetailRow('الوصف', '${m['description']}'),
-                    if (m['address'] != null)
-                      _buildDetailRow('العنوان', '${m['address']}'),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('إغلاق'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-    );
-  }
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
@@ -258,7 +193,7 @@ class _MapScreenState extends State<MapScreen> {
             child: GestureDetector(
               onTap: () async {
                 try {
-                  final fresh = await widget.api.getOne('/complaints/\${m['id']}');
+                  final fresh = await widget.api.getOne('/complaints/${m['id']}');
                   if (!mounted) return;
                   await showModalBottomSheet<bool>(
                     context: context,
@@ -310,7 +245,7 @@ class _MapScreenState extends State<MapScreen> {
             child: GestureDetector(
               onTap: () async {
                 try {
-                  final fresh = await widget.api.getOne('/work-orders/\${m['id']}');
+                  final fresh = await widget.api.getOne('/work-orders/${m['id']}');
                   if (!mounted) return;
                   await showModalBottomSheet<bool>(
                     context: context,
