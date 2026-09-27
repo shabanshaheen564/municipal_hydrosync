@@ -1,6 +1,7 @@
 class SessionUser {
   final int id;
   final String name;
+  final String username;
   final String email;
   final List<String> roles;
   final List<String> permissions;
@@ -9,6 +10,7 @@ class SessionUser {
     required this.id,
     required this.name,
     required this.email,
+    this.username = '',
     this.roles = const [],
     this.permissions = const [],
   });
@@ -29,6 +31,7 @@ class SessionUser {
     return SessionUser(
       id: (j['id'] as num?)?.toInt() ?? 0,
       name: '${j['name'] ?? ''}',
+      username: '${j['username'] ?? ''}',
       email: '${j['email'] ?? ''}',
       roles: roles,
       permissions: permissions,
