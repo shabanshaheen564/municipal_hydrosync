@@ -5,6 +5,7 @@ import 'models.dart';
 import 'local_store.dart';
 import 'sync_service.dart';
 import 'connectivity.dart';
+import 'notification_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/complaints_screen.dart';
 import 'screens/work_orders_screen.dart';
@@ -17,6 +18,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await LocalStore.init();
+  await NotificationService.initialize();
   runApp(const HydroSyncApp());
 }
 
@@ -40,6 +42,9 @@ class _HydroSyncAppState extends State<HydroSyncApp> {
   Future<void> boot() async {
     if (await api.isLoggedIn()) {
       user = await api.refreshSession();
+      if (user != null) {
+        await NotificationService.registerCurrentToken();
+      }
     }
     if (mounted) setState(() => loading = false);
   }
@@ -132,7 +137,10 @@ class _LoginPageState extends State<LoginPage> {
     });
     try {
       final d = await widget.api.login(email.text.trim(), password.text);
-      if (mounted) widget.onLogin(SessionUser.fromJson(d['user']));
+      if (mounted) {
+        await NotificationService.registerCurrentToken();
+        widget.onLogin(SessionUser.fromJson(d['user']));
+      }
     } catch (e) {
       if (mounted) setState(() => error = '$e');
     } finally {
