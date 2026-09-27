@@ -24,8 +24,12 @@ class SyncService {
   Future<void> start() async {
     await NotificationService.initialize();
     await refresh();
-    _subscription = Connectivity().onConnectivityChanged.listen((_) => syncNow());
-    _timer = Timer.periodic(const Duration(seconds: 20), (_) => syncNow());
+    _subscription = Connectivity().onConnectivityChanged.listen((result) {
+      if (!result.contains(ConnectivityResult.none)) {
+        unawaited(syncNow());
+      }
+    });
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) => unawaited(syncNow()));
   }
 
   Future<void> refresh() async {
@@ -41,13 +45,14 @@ class SyncService {
     try {
       state.value = SyncState.syncing;
       final count = await api.syncPending();
+      final remoteRefreshSucceeded = await api.refreshRemoteData();
       await refresh();
       final remaining = await api.pendingCount();
       failed.value = LocalStore.failedCount;
       lastError.value = LocalStore.lastQueueError;
       state.value = remaining > 0
           ? (failed.value > 0 ? SyncState.error : SyncState.offline)
-          : SyncState.idle;
+          : (remoteRefreshSucceeded ? SyncState.idle : SyncState.error);
       revision.value++;
       if (count > 0) {
         await NotificationService.showSyncCompleted(count);
