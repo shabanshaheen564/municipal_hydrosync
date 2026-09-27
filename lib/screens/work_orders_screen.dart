@@ -27,10 +27,21 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
   @override
   void initState() {
     super.initState();
+    widget.syncService.revision.addListener(_syncRevisionChanged);
     load();
   }
 
-  Future<void> load() async {
+  void _syncRevisionChanged() {
+    if (mounted) load(forceRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    widget.syncService.revision.removeListener(_syncRevisionChanged);
+    super.dispose();
+  }
+
+  Future<void> load({bool forceRefresh = false}) async {
     setState(() => loading = true);
     try {
       final filters = <String, String>{};
@@ -42,6 +53,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
       final x = await widget.api.list(
         '/work-orders',
         query: filters.isNotEmpty ? filters : null,
+        forceRefresh: forceRefresh,
       );
       if (mounted) setState(() => data = x);
     } catch (e) {
