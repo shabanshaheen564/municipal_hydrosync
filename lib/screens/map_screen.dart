@@ -220,8 +220,9 @@ class _MapScreenState extends State<MapScreen> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              subdomains: const ['a', 'b', 'c'],
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'ps.modb.water',
+              maxNativeZoom: 19,
             ),
             MarkerLayer(markers: markers),
           ],
@@ -270,15 +271,6 @@ class _MapScreenState extends State<MapScreen> {
                 ],
               ),
             ),
-          ),
-        ),
-        // Refresh button
-        Positioned(
-          bottom: 18,
-          right: 18,
-          child: FloatingActionButton(
-            onPressed: load,
-            child: const Icon(Icons.refresh),
           ),
         ),
       ],
