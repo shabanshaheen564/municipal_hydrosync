@@ -111,6 +111,22 @@ class NotificationService {
     _initialized = true;
   }
 
+  /// Registers the current FCM token after authentication succeeds.
+  /// Initialization may happen before login so Android can request the
+  /// notification permission, therefore token registration is retried here.
+  static Future<void> registerCurrentToken() async {
+    if (!_initialized || kIsWeb) return;
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null && token.isNotEmpty) {
+        await _registerToken(token);
+      }
+    } catch (_) {
+      // Token registration is retried on the next app start/token refresh.
+    }
+  }
+
   static Future<void> _registerToken(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
