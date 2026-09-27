@@ -505,6 +505,11 @@ class ApiClient {
     }
   }
 
+  Future<void> delete(String endpoint) async {
+    await _send('DELETE', endpoint);
+    await LocalStore.clearCache();
+  }
+
   Future<Map<String, dynamic>> convertComplaint(
     int complaintId, {
     required String title,
