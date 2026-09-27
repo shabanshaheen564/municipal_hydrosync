@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
 import 'models.dart';
 import 'local_store.dart';
+import 'notification_service.dart';
 
 class ApiException implements Exception {
   final int status;
@@ -280,6 +281,7 @@ class ApiClient {
       LocalStore.clearUserCache(await _userCacheId());
   Future<void> logout() async {
     try {
+      await NotificationService.unregisterCurrentToken();
       await _send('POST', '/logout');
     } catch (_) {}
     final p = await _prefs;
