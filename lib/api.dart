@@ -309,9 +309,10 @@ class ApiClient {
   Future<Map<String, dynamic>> _readMap(
     String path, {
     Map<String, String>? query,
+    bool forceRefresh = false,
   }) async {
     final key = await _cacheKey(path, query);
-    final cached = LocalStore.readCache(key);
+    final cached = forceRefresh ? null : LocalStore.readCache(key);
     if (cached?['data'] is Map) {
       _refreshMap(key, path, query);
       return Map<String, dynamic>.from(cached!['data']);
@@ -338,7 +339,8 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> summary() => _readMap('/reports/summary');
-  Future<Map<String, dynamic>> operationalMap() => _readMap('/map/operational');
+  Future<Map<String, dynamic>> operationalMap({bool forceRefresh = false}) =>
+      _readMap('/map/operational', forceRefresh: forceRefresh);
 
   Future<List<Map<String, dynamic>>> _pendingCreates(String endpoint) async {
     final result = <Map<String, dynamic>>[];
@@ -358,10 +360,14 @@ class ApiClient {
     return result.reversed.toList();
   }
 
-  Future<ApiList> list(String endpoint, {Map<String, String>? query}) async {
+  Future<ApiList> list(
+    String endpoint, {
+    Map<String, String>? query,
+    bool forceRefresh = false,
+  }) async {
     final key = await _cacheKey(endpoint, query);
     dynamic d;
-    final cached = LocalStore.readCache(key);
+    final cached = forceRefresh ? null : LocalStore.readCache(key);
     if (cached != null) {
       d = cached['data'];
       // Background refresh without blocking UI
