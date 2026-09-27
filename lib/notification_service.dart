@@ -127,6 +127,33 @@ class NotificationService {
     }
   }
 
+  static Future<void> unregisterCurrentToken() async {
+    if (!_initialized || kIsWeb) return;
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = prefs.getString('auth_token');
+      if (authToken == null || authToken.isEmpty) return;
+
+      await http
+          .delete(
+            Uri.parse('${AppConfig.apiBaseUrl}/device/fcm-token'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $authToken',
+            },
+            body: jsonEncode({'token': token}),
+          )
+          .timeout(AppConfig.requestTimeout);
+    } catch (_) {
+      // Logout must still complete if token cleanup is temporarily unavailable.
+    }
+  }
+
   static Future<void> _registerToken(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
