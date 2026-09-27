@@ -580,6 +580,29 @@ class ApiClient {
     }
   }
 
+  Future<bool> refreshRemoteData() async {
+    var refreshed = false;
+
+    Future<void> refresh(
+      String path, {
+      Map<String, String>? query,
+    }) async {
+      try {
+        final response = await _send('GET', path, query: query);
+        final key = await _cacheKey(path, query);
+        await LocalStore.writeCache(key, response);
+        refreshed = true;
+      } catch (_) {}
+    }
+
+    await refresh('/complaints', query: {'per_page': '100'});
+    await refresh('/work-orders', query: {'per_page': '100'});
+    await refresh('/map/operational');
+    await refresh('/reports/summary');
+    if (refreshed) await LocalStore.setLastSyncNow();
+    return refreshed;
+  }
+
   Future<int> pendingCount() async => LocalStore.pendingCount;
   Future<DateTime?> lastSyncAt() async => LocalStore.lastSyncAt;
 
