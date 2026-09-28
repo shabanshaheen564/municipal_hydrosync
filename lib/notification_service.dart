@@ -50,6 +50,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   static bool _localInitialized = false;
   static bool _initialized = false;
+  static Future<void>? _initializationFuture;
   static bool _fcmListenersAttached = false;
   static String? _lastInitializationError;
 
@@ -82,9 +83,12 @@ class NotificationService {
     _localInitialized = true;
   }
 
-  static Future<void> initialize() async {
-    if (_initialized) return;
+  static Future<void> initialize() {
+    if (_initialized) return Future.value();
+    return _initializationFuture ??= _initializeInternal();
+  }
 
+  static Future<void> _initializeInternal() async {
     try {
       await initializeLocalOnly();
 
@@ -93,10 +97,12 @@ class NotificationService {
           await Firebase.initializeApp();
           final messaging = FirebaseMessaging.instance;
           await messaging.setAutoInitEnabled(true);
+
           final settings = await messaging.requestPermission(
             alert: true,
             badge: true,
             sound: true,
+            provisional: false,
           );
           debugPrint(
             'FCM notification authorization: ${settings.authorizationStatus}',
@@ -123,6 +129,11 @@ class NotificationService {
           }
 
           final token = await messaging.getToken();
+          debugPrint(
+            token == null || token.isEmpty
+                ? 'FCM token: unavailable'
+                : 'FCM token: received (${token.length} chars)',
+          );
           if (token != null && token.isNotEmpty) {
             await _registerToken(token);
           }
@@ -141,9 +152,7 @@ class NotificationService {
           );
         } catch (e) {
           _lastInitializationError = '$e';
-          debugPrint(
-            'NotificationService initialization error: $e',
-          );
+          debugPrint('NotificationService initialization error: $e');
         }
       }
     } catch (e) {
@@ -151,6 +160,7 @@ class NotificationService {
       debugPrint('NotificationService startup error: $e');
     } finally {
       _initialized = true;
+      _initializationFuture = null;
     }
   }
 
@@ -163,8 +173,8 @@ class NotificationService {
       if (token != null && token.isNotEmpty) {
         await _registerToken(token);
       }
-    } catch (_) {
-      // Token registration is retried on the next app start/token refresh.
+    } catch (e) {
+      debugPrint('FCM current token registration error: $e');
     }
   }
 
