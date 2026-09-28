@@ -11,7 +11,7 @@ void main() {
     await tester.pumpWidget(const HydroSyncApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Municipal HydroSync'), findsOneWidget);
+    expect(find.text('نظام إدارة مياه بلدية دير البلح'), findsOneWidget);
     expect(find.text('تسجيل الدخول'), findsOneWidget);
   });
 }
