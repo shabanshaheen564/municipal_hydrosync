@@ -15,8 +15,6 @@ bool _validNotificationText(String? value) {
   if (value == null) return false;
   final text = value.trim();
   if (text.isEmpty) return false;
-  // Protect the user from malformed server/test payloads such as "0$".
-  if (text == '0$') return false;
   return true;
 }
 
