@@ -155,7 +155,7 @@ class NotificationService {
   }
 
   static Future<void> registerCurrentToken() async {
-    if (kIsWeb) return;
+    if (!_isMobilePlatform) return;
 
     try {
       if (!_initialized) await initialize();
