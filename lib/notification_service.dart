@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,6 +47,9 @@ class NotificationService {
   static bool _localInitialized = false;
   static bool _initialized = false;
   static bool _fcmListenersAttached = false;
+  static String? _lastInitializationError;
+
+  static String? get lastInitializationError => _lastInitializationError;
 
   static Future<void> initializeLocalOnly() async {
     if (_localInitialized) return;
@@ -82,10 +86,13 @@ class NotificationService {
           await Firebase.initializeApp();
           final messaging = FirebaseMessaging.instance;
           await messaging.setAutoInitEnabled(true);
-          await messaging.requestPermission(
+          final settings = await messaging.requestPermission(
             alert: true,
             badge: true,
             sound: true,
+          );
+          debugPrint(
+            'FCM notification authorization: ${settings.authorizationStatus}',
           );
 
           if (!_fcmListenersAttached) {
@@ -113,12 +120,22 @@ class NotificationService {
             await _registerToken(token);
           }
           messaging.onTokenRefresh.listen(_registerToken);
-        } catch (_) {
-          // Firebase is optional at startup; the app must remain usable.
+        } on FirebaseException catch (e) {
+          _lastInitializationError =
+              'Firebase ${e.code}: ${e.message ?? 'unknown error'}';
+          debugPrint('NotificationService Firebase error: $_lastInitializationError');
+        } on PlatformException catch (e) {
+          _lastInitializationError =
+              'Platform ${e.code}: ${e.message ?? 'unknown error'}';
+          debugPrint('NotificationService platform error: $_lastInitializationError');
+        } catch (e) {
+          _lastInitializationError = '$e';
+          debugPrint('NotificationService initialization error: $e');
         }
       }
-    } catch (_) {
-      // Notification setup must never block the application startup.
+    } catch (e) {
+      _lastInitializationError = '$e';
+      debugPrint('NotificationService startup error: $e');
     } finally {
       _initialized = true;
     }
@@ -183,9 +200,15 @@ class NotificationService {
           )
           .timeout(AppConfig.requestTimeout);
 
-      if (response.statusCode < 200 || response.statusCode >= 300) return;
-    } catch (_) {
-      // Token registration is retried on the next app start/token refresh.
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        debugPrint(
+          'FCM token registration failed: HTTP ${response.statusCode} ${response.body}',
+        );
+        return;
+      }
+      debugPrint('FCM token registered successfully.');
+    } catch (e) {
+      debugPrint('FCM token registration error: $e');
     }
   }
 
