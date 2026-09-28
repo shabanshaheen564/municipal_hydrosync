@@ -57,6 +57,7 @@ class NotificationService {
           defaultTargetPlatform == TargetPlatform.iOS);
 
   static Future<void> initializeLocalOnly() async {
+    if (!_isMobilePlatform) return;
     if (_localInitialized) return;
 
     const settings = InitializationSettings(
