@@ -24,12 +24,21 @@ class SyncService {
   Future<void> start() async {
     await NotificationService.initialize();
     await refresh();
+
     _subscription = Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) {
         unawaited(syncNow());
+      } else {
+        state.value = SyncState.offline;
       }
     });
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) => unawaited(syncNow()));
+
+    // Run one complete synchronization immediately, then repeat periodically.
+    unawaited(syncNow());
+    _timer = Timer.periodic(
+      const Duration(minutes: 2),
+      (_) => unawaited(syncNow()),
+    );
   }
 
   Future<void> refresh() async {
@@ -39,8 +48,23 @@ class SyncService {
     lastError.value = LocalStore.lastQueueError;
   }
 
+  Future<bool> _hasConnection() async {
+    final result = await Connectivity().checkConnectivity();
+    return !result.contains(ConnectivityResult.none);
+  }
+
   Future<int> syncNow() async {
     if (_running) return 0;
+
+    if (!await _hasConnection()) {
+      state.value = SyncState.offline;
+      await refresh();
+      // Do not bump revision while offline. Pages keep using their cached data
+      // instead of repeatedly attempting a forced network refresh and showing
+      // the same offline message every timer tick.
+      return 0;
+    }
+
     _running = true;
     try {
       state.value = SyncState.syncing;
@@ -53,7 +77,12 @@ class SyncService {
       state.value = remaining > 0
           ? (failed.value > 0 ? SyncState.error : SyncState.offline)
           : (remoteRefreshSucceeded ? SyncState.idle : SyncState.error);
+
+      // Notify all screens that one GLOBAL synchronization completed. Each
+      // screen then reloads its own cached data, while refreshRemoteData()
+      // has already refreshed complaints, work orders, map and summary.
       revision.value++;
+
       if (count > 0) {
         await NotificationService.showSyncCompleted(count);
       }
@@ -63,7 +92,8 @@ class SyncService {
       state.value = SyncState.error;
       failed.value = LocalStore.failedCount;
       lastError.value = LocalStore.lastQueueError;
-      revision.value++;
+      // Do not continuously trigger page reloads when the network/server is
+      // unavailable. The next successful synchronization will do so.
       return 0;
     } finally {
       _running = false;
@@ -80,6 +110,11 @@ class SyncService {
   void dispose() {
     _subscription?.cancel();
     _timer?.cancel();
-    state.dispose(); pending.dispose(); lastSync.dispose(); failed.dispose(); lastError.dispose(); revision.dispose();
+    state.dispose();
+    pending.dispose();
+    lastSync.dispose();
+    failed.dispose();
+    lastError.dispose();
+    revision.dispose();
   }
 }
