@@ -14,7 +14,7 @@ bool _validNotificationText(String? value) {
   final text = value.trim();
   if (text.isEmpty) return false;
   // Protect the user from malformed server/test payloads such as "0$".
-  if (text == '0$' || text == r'0$') return false;
+  if (text == '0$') return false;
   return true;
 }
 
@@ -24,8 +24,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await Firebase.initializeApp();
   }
 
-  // Notification payloads are displayed by Android while the app is in the
-  // background/terminated state. Data-only messages need a local notification.
   if (message.notification == null && message.data.isNotEmpty) {
     await NotificationService.initializeLocalOnly();
     final title = '${message.data['title'] ?? 'إدارة الشكاوى'}';
@@ -126,9 +124,6 @@ class NotificationService {
     }
   }
 
-  /// Registers the current FCM token after authentication succeeds.
-  /// Initialization may happen before login so Android can request the
-  /// notification permission, therefore token registration is retried here.
   static Future<void> registerCurrentToken() async {
     if (kIsWeb) return;
 
