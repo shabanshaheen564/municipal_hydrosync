@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import 'local_store.dart';
 import 'notification_service.dart';
@@ -33,8 +35,11 @@ class SyncService {
       }
     });
 
-    // Run one complete synchronization immediately, then repeat periodically.
+    // One complete global synchronization immediately after login/startup.
     unawaited(syncNow());
+
+    // Keep the local database fresh while online. Two minutes gives the field
+    // app reasonably quick updates without hammering the API continuously.
     _timer = Timer.periodic(
       const Duration(minutes: 2),
       (_) => unawaited(syncNow()),
@@ -53,23 +58,70 @@ class SyncService {
     return !result.contains(ConnectivityResult.none);
   }
 
+  Future<String?> _userId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('auth_user');
+    if (raw == null) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map && decoded['id'] != null) return '${decoded['id']}';
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _cacheListPages(String endpoint) async {
+    final userId = await _userId();
+    if (userId == null) return;
+
+    var page = 1;
+    var total = 0;
+    while (true) {
+      final result = await api.list(
+        endpoint,
+        query: {'per_page': '100', 'page': '$page'},
+        forceRefresh: true,
+      );
+
+      total = result.total;
+      for (final item in result.items) {
+        final id = item['id'];
+        if (id == null) continue;
+        await LocalStore.writeCache(
+          LocalStore.cacheKey(userId, '$endpoint/$id', null),
+          item,
+        );
+      }
+
+      if (result.items.isEmpty || page * 100 >= total) break;
+      page++;
+    }
+  }
+
   Future<int> syncNow() async {
     if (_running) return 0;
 
     if (!await _hasConnection()) {
       state.value = SyncState.offline;
       await refresh();
-      // Do not bump revision while offline. Pages keep using their cached data
-      // instead of repeatedly attempting a forced network refresh and showing
-      // the same offline message every timer tick.
+      // No revision while offline: pages keep using their cached data and do
+      // not repeatedly force failed network requests/snackbars.
       return 0;
     }
 
     _running = true;
     try {
       state.value = SyncState.syncing;
+
+      // First upload queued offline operations, then refresh the complete
+      // remote operational snapshot (complaints, work orders, map, summary).
       final count = await api.syncPending();
       final remoteRefreshSucceeded = await api.refreshRemoteData();
+
+      // Cache every complaint/work-order record under its detail endpoint so
+      // tapping a record while offline opens the already downloaded data.
+      await _cacheListPages('/complaints');
+      await _cacheListPages('/work-orders');
+
       await refresh();
       final remaining = await api.pendingCount();
       failed.value = LocalStore.failedCount;
@@ -78,9 +130,8 @@ class SyncService {
           ? (failed.value > 0 ? SyncState.error : SyncState.offline)
           : (remoteRefreshSucceeded ? SyncState.idle : SyncState.error);
 
-      // Notify all screens that one GLOBAL synchronization completed. Each
-      // screen then reloads its own cached data, while refreshRemoteData()
-      // has already refreshed complaints, work orders, map and summary.
+      // One revision means one GLOBAL synchronization. Every page listening
+      // to this notifier reloads its own local cache together.
       revision.value++;
 
       if (count > 0) {
@@ -92,8 +143,8 @@ class SyncService {
       state.value = SyncState.error;
       failed.value = LocalStore.failedCount;
       lastError.value = LocalStore.lastQueueError;
-      // Do not continuously trigger page reloads when the network/server is
-      // unavailable. The next successful synchronization will do so.
+      // Do not trigger another page refresh when the remote synchronization
+      // fails. The next successful synchronization will update all screens.
       return 0;
     } finally {
       _running = false;
