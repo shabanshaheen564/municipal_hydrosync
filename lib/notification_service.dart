@@ -51,6 +51,11 @@ class NotificationService {
 
   static String? get lastInitializationError => _lastInitializationError;
 
+  static bool get _isMobilePlatform =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
   static Future<void> initializeLocalOnly() async {
     if (_localInitialized) return;
 
@@ -164,7 +169,7 @@ class NotificationService {
   }
 
   static Future<void> unregisterCurrentToken() async {
-    if (!_initialized || kIsWeb) return;
+    if (!_initialized || !_isMobilePlatform) return;
 
     try {
       final token = await FirebaseMessaging.instance.getToken();
