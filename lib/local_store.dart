@@ -120,18 +120,25 @@ class LocalStore {
       final nextAttempts = attempts + 1;
       final delaySeconds =
           (20 * (1 << (nextAttempts - 1))).clamp(20, 3600).toInt();
+      final retryable =
+          statusCode == 0 ||
+          statusCode == 408 ||
+          statusCode == 429 ||
+          statusCode >= 500;
       item['attempts'] = nextAttempts;
       item['status'] = 'failed';
+      item['retryable'] = retryable;
       item['last_status_code'] = statusCode;
       item['last_error'] = message;
       item['last_attempt_at'] = DateTime.now().toIso8601String();
-      item['next_retry_at'] =
-          DateTime.now().add(Duration(seconds: delaySeconds)).toIso8601String();
+      item['next_retry_at'] = retryable
+          ? DateTime.now().add(Duration(seconds: delaySeconds)).toIso8601String()
+          : null;
       await _queue.put(id, jsonEncode(item));
     } catch (_) {}
   }
 
-  static int get pendingCount => _queue.length;
+  static int get pendingCount => queueItems().where((item) => item['status'] != 'failed' || item['retryable'] == true).length;
 
   static int get failedCount => queueItems().where((item) => item['status'] == 'failed').length;
 
