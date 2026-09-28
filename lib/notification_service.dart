@@ -9,6 +9,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config.dart';
 
+bool _validNotificationText(String? value) {
+  if (value == null) return false;
+  final text = value.trim();
+  if (text.isEmpty) return false;
+  // Protect the user from malformed server/test payloads such as "0$".
+  if (text == '0$' || text == r'0$') return false;
+  return true;
+}
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (!kIsWeb) {
@@ -21,11 +30,13 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await NotificationService.initializeLocalOnly();
     final title = '${message.data['title'] ?? 'إدارة الشكاوى'}';
     final body = '${message.data['body'] ?? 'لديك تحديث جديد.'}';
-    await NotificationService.show(
-      title: title,
-      body: body,
-      payload: '${message.data['type'] ?? 'general'}',
-    );
+    if (_validNotificationText(title) && _validNotificationText(body)) {
+      await NotificationService.show(
+        title: title,
+        body: body,
+        payload: '${message.data['type'] ?? 'general'}',
+      );
+    }
   }
 }
 
@@ -87,7 +98,8 @@ class NotificationService {
               final notification = message.notification;
               final title = notification?.title ?? message.data['title'];
               final body = notification?.body ?? message.data['body'];
-              if (title != null && body != null) {
+              if (_validNotificationText(title?.toString()) &&
+                  _validNotificationText(body?.toString())) {
                 await show(
                   title: '$title',
                   body: '$body',
@@ -188,6 +200,7 @@ class NotificationService {
     int? id,
     String? payload,
   }) async {
+    if (!_validNotificationText(title) || !_validNotificationText(body)) return;
     await initializeLocalOnly();
 
     const details = NotificationDetails(
