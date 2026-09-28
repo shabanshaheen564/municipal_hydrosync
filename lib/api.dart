@@ -617,6 +617,7 @@ class ApiClient {
       if (item == null) continue;
 
       final nextRetry = DateTime.tryParse('${item['next_retry_at']}');
+      if (item['status'] == 'failed' && nextRetry == null) continue;
       if (nextRetry != null && nextRetry.isAfter(DateTime.now())) continue;
 
       final method = '${item['method']}';
