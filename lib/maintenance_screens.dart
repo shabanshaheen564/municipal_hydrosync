@@ -731,6 +731,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
                 subtitle: Text(feature['dataset'] is Map ? _s(feature['dataset']['display_name'] ?? feature['dataset']['name']) : '-'),
               ),
             ),
+            _assetDataCard(feature),
             _infoCard(x),
             if (inspections.isNotEmpty) _historyCard('سجل الفحوصات', inspections, true),
             if (jobs.isNotEmpty) _historyCard('محاولات التنفيذ (' + jobs.length.toString() + ')', jobs, false),
