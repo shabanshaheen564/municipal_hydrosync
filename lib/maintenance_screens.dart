@@ -619,7 +619,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
 
   Future<void> load() async {
     try {
-      final result = await widget.api.getOne('/maintenance/requests/' + widget.id.toString());
+      final result = await widget.api.getOne('/maintenance/requests/' + widget.id.toString(), forceRefresh: true);
       if (mounted) setState(() => data = result);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -766,15 +766,22 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   );
 
   Widget _row(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: RichText(
-      text: TextSpan(
-        style: DefaultTextStyle.of(context).style,
-        children: [
-          TextSpan(text: label + ': ', style: const TextStyle(fontWeight: FontWeight.bold)),
-          TextSpan(text: value),
-        ],
-      ),
+    padding: const EdgeInsets.symmetric(vertical: 7),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 3),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(value, softWrap: true, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+      ],
     ),
   );
 }
