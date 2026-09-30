@@ -292,6 +292,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final SyncService syncService;
   late final ConnectivityService connectivity;
 
+  bool get showMaintenance =>
+      widget.user.permissions.contains('maintenance.view');
+
   @override
   void initState() {
     super.initState();
@@ -300,8 +303,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     connectivity.init();
 
     syncService = SyncService(widget.api);
-    final showMaintenance =
-        widget.user.permissions.contains('maintenance.view');
     final mapTab = showMaintenance ? 4 : 3;
     pages = [
       DashboardScreen(
