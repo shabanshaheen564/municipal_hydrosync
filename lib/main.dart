@@ -15,6 +15,7 @@ import 'screens/map_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'widgets/common_widgets.dart';
+import 'maintenance_screens.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -299,15 +300,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     connectivity.init();
 
     syncService = SyncService(widget.api);
+    final showMaintenance =
+        widget.user.permissions.contains('maintenance.view');
+    final mapTab = showMaintenance ? 4 : 3;
     pages = [
       DashboardScreen(
         api: widget.api,
         user: widget.user,
         syncService: syncService,
-        onOpenTab: (i) => setState(() => tab = i),
+        onOpenTab: (i) => setState(() => tab = i == 3 ? mapTab : i),
       ),
       ComplaintsScreen(api: widget.api, syncService: syncService),
       WorkOrdersScreen(api: widget.api, syncService: syncService),
+      if (showMaintenance)
+        MaintenanceListPage(api: widget.api, user: widget.user),
       MapScreen(api: widget.api, syncService: syncService),
       ProfileScreen(
         user: widget.user,
@@ -397,28 +403,34 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
         onDestinationSelected: (i) => setState(() => tab = i),
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
             label: 'الرئيسية',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.report_outlined),
             selectedIcon: Icon(Icons.report),
             label: 'الشكاوى',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.engineering_outlined),
             selectedIcon: Icon(Icons.engineering),
             label: 'المهام',
           ),
-          NavigationDestination(
+          if (showMaintenance)
+            const NavigationDestination(
+              icon: Icon(Icons.build_outlined),
+              selectedIcon: Icon(Icons.build),
+              label: 'الصيانة',
+            ),
+          const NavigationDestination(
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map),
             label: 'الخريطة',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'حسابي',
