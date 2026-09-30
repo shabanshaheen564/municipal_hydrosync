@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -32,13 +34,48 @@ String maintenanceResultLabel(String value) => const {
   'problem': 'مشكلة',
 }[value] ?? value;
 
+Map<String, dynamic> _mapValue(dynamic value) {
+  if (value is Map) return Map<String, dynamic>.from(value);
+  if (value is String) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    } catch (_) {}
+  }
+  return <String, dynamic>{};
+}
+
+Map<String, dynamic> _normalizeFeature(dynamic raw) {
+  final feature = _mapValue(raw);
+  if (feature.isEmpty) return <String, dynamic>{};
+
+  final nested = _mapValue(feature['gis_feature']);
+  final source = nested.isNotEmpty ? nested : feature;
+  final geometry = _mapValue(source['geometry']);
+  final geojson = _mapValue(source['geojson']);
+  final values = _mapValue(source['values']);
+  final properties = _mapValue(source['properties']);
+
+  return {
+    ...source,
+    'values': values.isNotEmpty ? values : properties,
+    'geojson': geojson.isNotEmpty
+        ? geojson
+        : (geometry.isNotEmpty
+            ? {
+                'type': 'Feature',
+                'geometry': geometry,
+                'properties': properties,
+              }
+            : source['geojson']),
+  };
+}
+
 String maintenanceAssetName(Map<String, dynamic> feature) {
-  final values = feature['values'] is Map
-      ? Map<String, dynamic>.from(feature['values'])
-      : <String, dynamic>{};
+  final values = _mapValue(feature['values']);
   const keys = [
     'name_ar', 'NAME_AR', 'name', 'NAME', 'asset_name', 'ASSET_NAME',
-    'well_name', 'Well_Name', 'WELL_NAME',
+    'well_name', 'Well_Name', 'WELL_NAME', 'NAME_EN', 'name_en',
   ];
   for (final key in keys) {
     final value = values[key];
@@ -672,8 +709,8 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   @override
   Widget build(BuildContext context) {
     if (loading && data == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    final x = data ?? <String, dynamic>{};
-    final feature = x['gis_feature'] is Map ? Map<String, dynamic>.from(x['gis_feature']) : <String, dynamic>{};
+    final x = _mapValue(data);
+    final feature = _normalizeFeature(x['gis_feature'] ?? x);
     final jobs = (x['jobs'] as List?) ?? const [];
     final inspections = (x['inspections'] as List?) ?? const [];
     return Scaffold(
@@ -1038,8 +1075,9 @@ class MaintenanceMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final geojson = feature['geojson'] is Map ? Map<String, dynamic>.from(feature['geojson']) : null;
-    final geometry = geojson?['geometry'] is Map ? Map<String, dynamic>.from(geojson!['geometry']) : null;
+    final normalized = _normalizeFeature(feature);
+    final geojson = _mapValue(normalized['geojson']);
+    final geometry = _mapValue(geojson['geometry']);
     final shape = _parseGeometry(geometry);
     return Card(
       clipBehavior: Clip.antiAlias,
