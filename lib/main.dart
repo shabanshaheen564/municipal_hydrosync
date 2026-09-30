@@ -3,6 +3,7 @@ import 'api.dart';
 import 'models.dart';
 import 'mobile_screens.dart';
 import 'mobile_management.dart';
+import 'maintenance_screens.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'local_store.dart';
 import 'sync_service.dart';
@@ -191,10 +192,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    final showMaintenance = widget.user.permissions.contains('maintenance.view');
+    final mapTab = showMaintenance ? 4 : 3;
     pages = [
-      Dashboard(api: widget.api, user: widget.user, onOpenTab: (i) => setState(() => tab = i)),
+      Dashboard(api: widget.api, user: widget.user, onOpenTab: (i) => setState(() => tab = i == 3 ? mapTab : i)),
       ManagedListPage(api: widget.api, complaints: true),
       ManagedListPage(api: widget.api, complaints: false),
+      if (showMaintenance) MaintenanceListPage(api: widget.api, user: widget.user),
       MapPage(api: widget.api),
       ProfilePage(user: widget.user, api: widget.api, onLogout: widget.onLogout),
     ];
@@ -240,12 +244,14 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
         onDestinationSelected: (i) => setState(() => tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'الرئيسية'),
-          NavigationDestination(icon: Icon(Icons.report_outlined), selectedIcon: Icon(Icons.report), label: 'الشكاوى'),
-          NavigationDestination(icon: Icon(Icons.engineering_outlined), selectedIcon: Icon(Icons.engineering), label: 'المهام'),
-          NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'الخريطة'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'حسابي'),
+        destinations: [
+          const NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'الرئيسية'),
+          const NavigationDestination(icon: Icon(Icons.report_outlined), selectedIcon: Icon(Icons.report), label: 'الشكاوى'),
+          const NavigationDestination(icon: Icon(Icons.engineering_outlined), selectedIcon: Icon(Icons.engineering), label: 'المهام'),
+          if (widget.user.permissions.contains('maintenance.view'))
+            const NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'الصيانة'),
+          const NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'الخريطة'),
+          const NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'حسابي'),
         ],
       ),
     ),
