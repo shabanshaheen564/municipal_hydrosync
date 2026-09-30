@@ -1114,7 +1114,9 @@ class MaintenanceMapCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = _normalizeFeature(feature);
     final geojson = _mapValue(normalized['geojson']);
-    final geometry = _mapValue(geojson['geometry']);
+    final geometry = geojson['type']?.toString() == 'Feature'
+        ? _mapValue(geojson['geometry'])
+        : geojson;
     final shape = _parseGeometry(geometry);
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -1183,7 +1185,18 @@ _GeometryShape _parseGeometry(Map<String, dynamic>? geometry) {
     markers.addAll(all.map((p) => Marker(point: p, width: 44, height: 44, child: const Icon(Icons.location_on, size: 34, color: Colors.red))));
   } else if (type == 'LineString' && all.length >= 2) {
     polylines.add(Polyline(points: all, strokeWidth: 5, color: Colors.blue));
-  } else if (type == 'Polygon') {
+  } else if (type == 'MultiLineString' && coordinates is List) {
+    for (final rawLine in coordinates) {
+      final line = <LatLng>[];
+      if (rawLine is List) {
+        for (final raw in rawLine) {
+          final p = point(raw);
+          if (p != null) line.add(p);
+        }
+      }
+      if (line.length >= 2) polylines.add(Polyline(points: line, strokeWidth: 5, color: Colors.blue));
+    }
+  } else if (type == 'Polygon' || type == 'MultiPolygon') {
     final rings = coordinates is List ? coordinates : const [];
     if (rings.isNotEmpty && rings.first is List) {
       final ring = <LatLng>[];
