@@ -438,7 +438,10 @@ class ApiClient {
     try {
       final d = await _send('GET', endpoint);
       await LocalStore.writeCache(key, d);
-      return Map<String, dynamic>.from(d);
+      final payload = d is Map && d['data'] is Map
+          ? Map<String, dynamic>.from(d['data'])
+          : Map<String, dynamic>.from(d);
+      return payload;
     } on ApiException catch (e) {
       if (e.status != 0) rethrow;
       throw const ApiException(0, 'لا توجد نسخة محلية من هذه البيانات.');
