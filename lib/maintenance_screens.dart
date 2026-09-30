@@ -762,6 +762,42 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     );
   }
 
+  Widget _assetDataCard(Map<String, dynamic> feature) {
+    final values = _mapValue(feature['values']);
+    if (values.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('لا توجد بيانات وصفية مسجلة لهذا الأصل.'),
+        ),
+      );
+    }
+    final entries = values.entries.where((e) => e.value != null && e.value.toString().trim().isNotEmpty).toList();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('بيانات الأصل', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            ...entries.map((e) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(width: 125, child: Text(e.key, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold))),
+                  const SizedBox(width: 8),
+                  Expanded(child: SelectableText(_s(e.value), softWrap: true)),
+                ],
+              ),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _infoCard(Map<String, dynamic> x) => Card(
     child: Padding(
       padding: const EdgeInsets.all(16),
