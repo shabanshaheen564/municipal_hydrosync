@@ -788,7 +788,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
                 children: [
                   SizedBox(width: 125, child: Text(e.key, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold))),
                   const SizedBox(width: 8),
-                  Expanded(child: SelectableText(_s(e.value), softWrap: true)),
+                  Expanded(child: Text(_s(e.value), softWrap: true)),
                 ],
               ),
             )),
