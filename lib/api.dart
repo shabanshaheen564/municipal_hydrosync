@@ -428,9 +428,9 @@ class ApiClient {
     } catch (_) {}
   }
 
-  Future<Map<String, dynamic>> getOne(String endpoint) async {
+  Future<Map<String, dynamic>> getOne(String endpoint, {bool forceRefresh = false}) async {
     final key = await _cacheKey(endpoint, null);
-    final cached = LocalStore.readCache(key);
+    final cached = forceRefresh ? null : LocalStore.readCache(key);
     if (cached != null) {
       _refreshOne(key, endpoint);
       return Map<String, dynamic>.from(cached['data']);
