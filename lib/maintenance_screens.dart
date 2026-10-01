@@ -668,7 +668,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
 
   Future<void> load() async {
     try {
-      final result = await widget.api.getOne('/maintenance/requests/' + widget.id.toString(), forceRefresh: true);
+      final result = await widget.api.getOne('/maintenance/requests/$id', forceRefresh: true);
       if (mounted) setState(() => data = result);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -747,8 +747,12 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     final feature = _normalizeFeature(x['gis_feature'] ?? x);
     final jobs = (x['jobs'] as List?) ?? const [];
     final inspections = (x['inspections'] as List?) ?? const [];
-    return WillPopScope(
-      onWillPop: _handleBack,
+    return PopScope<bool>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, changed);
+      },
       child: Scaffold(
         appBar: AppBar(
         title: Text(_s(x['request_no'])),
@@ -941,7 +945,7 @@ class _MaintenanceEditDialogState extends State<MaintenanceEditDialog> {
     }
     setState(() => busy = true);
     try {
-      final updated = await widget.api.update('/maintenance/requests/' + widget.data['id'].toString(), {
+      final updated = await widget.api.update('/maintenance/requests/${widget.data['id']}', {
         'priority': priority,
         'status': status,
         'assigned_to': assignedTo,
