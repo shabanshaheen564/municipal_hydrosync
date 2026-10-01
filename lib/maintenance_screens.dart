@@ -193,7 +193,7 @@ class _MaintenanceListPageState extends State<MaintenanceListPage> {
                             child: ListTile(
                               leading: const CircleAvatar(child: Icon(Icons.build_outlined)),
                               title: Text(
-                                _s(item['request_no']) + ' — ' + maintenanceAssetName(feature),
+                                '${_s(item['request_no'])} — ${maintenanceAssetName(feature)}',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -467,7 +467,7 @@ class _MaintenanceCreatePageState extends State<MaintenanceCreatePage> {
             TextButton.icon(
               onPressed: () => setState(() => assignedTo = me?.id),
               icon: const Icon(Icons.person),
-              label: Text('إسناد للمستخدم الحالي: ' + _s(me?.name)),
+              label: Text('إسناد للمستخدم الحالي: ${_s(me?.name)}'),
             ),
           const SizedBox(height: 12),
           TextField(controller: notes, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'ملاحظات')),
@@ -774,7 +774,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
             _assetDataCard(feature),
             _infoCard(x),
             if (inspections.isNotEmpty) _historyCard('سجل الفحوصات', inspections, true),
-            if (jobs.isNotEmpty) _historyCard('محاولات التنفيذ (' + jobs.length.toString() + ')', jobs, false),
+            if (jobs.isNotEmpty) _historyCard('محاولات التنفيذ (${jobs.length})', jobs, false),
             const SizedBox(height: 12),
             if (canComplete && x['status'] != 'completed' && x['status'] != 'cancelled')
               FilledButton.icon(onPressed: execute, icon: const Icon(Icons.build), label: const Text('تسجيل تنفيذ / محاولة صيانة')),
@@ -1014,7 +1014,7 @@ class _MaintenanceEditDialogState extends State<MaintenanceEditDialog> {
                   ],
                   onChanged: (v) => setState(() => assignedTo = v),
                 ),
-              if (canAssign && us.isEmpty) Text('المستخدم الحالي: ' + _s(me?.name)),
+              if (canAssign && us.isEmpty) Text('المستخدم الحالي: ${_s(me?.name)}'),
             ],
           ),
         ),
@@ -1105,7 +1105,7 @@ class _MaintenanceJobPageState extends State<MaintenanceJobPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('طلب: ' + _s(widget.data['request_no']), style: Theme.of(context).textTheme.titleLarge),
+          Text('طلب: ${_s(widget.data['request_no'])}', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (canAssign && us.isNotEmpty)
             DropdownButtonFormField<int>(
