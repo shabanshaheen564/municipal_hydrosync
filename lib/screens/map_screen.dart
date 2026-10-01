@@ -181,11 +181,12 @@ class _MapScreenState extends State<MapScreen> {
             height: 48,
             child: GestureDetector(
               onTap: () async {
+                final navigator = Navigator.of(context);
                 try {
                   final fresh = await widget.api.getOne('/complaints/${m['id']}');
-                  if (!context.mounted) return;
+                  if (!mounted) return;
                   await showModalBottomSheet<bool>(
-                    context: context,
+                    context: navigator.context,
                     isScrollControlled: true,
                     builder: (_) => ComplaintManager(api: widget.api, data: fresh),
                   );
@@ -228,11 +229,12 @@ class _MapScreenState extends State<MapScreen> {
             height: 48,
             child: GestureDetector(
               onTap: () async {
+                final navigator = Navigator.of(context);
                 try {
                   final fresh = await widget.api.getOne('/work-orders/${m['id']}');
-                  if (!context.mounted) return;
+                  if (!mounted) return;
                   await showModalBottomSheet<bool>(
-                    context: context,
+                    context: navigator.context,
                     isScrollControlled: true,
                     builder: (_) => WorkOrderManager(api: widget.api, data: fresh),
                   );
@@ -275,14 +277,15 @@ class _MapScreenState extends State<MapScreen> {
             height: 48,
             child: GestureDetector(
               onTap: () async {
+                final navigator = Navigator.of(context);
                 try {
                   final fresh = await widget.api.getOne(
                     '/maintenance/requests/${m['id']}',
                     forceRefresh: true,
                   );
-                  if (!context.mounted) return;
+                  if (!mounted) return;
                   await showModalBottomSheet<bool>(
-                    context: context,
+                    context: navigator.context,
                     isScrollControlled: true,
                     builder: (_) => MaintenanceDetailsPage(
                       api: widget.api,
