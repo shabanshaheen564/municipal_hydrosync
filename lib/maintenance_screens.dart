@@ -707,8 +707,13 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     );
     if (reason == null || reason.isEmpty) return;
     try {
-      await widget.api.create('/maintenance/requests/' + widget.id.toString() + '/cancel', {'cancellation_reason': reason});
-      if (mounted) load();
+      final updated = await widget.api.create('/maintenance/requests/' + widget.id.toString() + '/cancel', {'cancellation_reason': reason});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم إلغاء طلب الصيانة بنجاح')),
+        );
+        Navigator.pop(context, true);
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
@@ -916,7 +921,7 @@ class _MaintenanceEditDialogState extends State<MaintenanceEditDialog> {
     }
     setState(() => busy = true);
     try {
-      await widget.api.update('/maintenance/requests/' + widget.data['id'].toString(), {
+      final updated = await widget.api.update('/maintenance/requests/' + widget.data['id'].toString(), {
         'priority': priority,
         'status': status,
         'assigned_to': assignedTo,
