@@ -690,6 +690,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   }
 
   Future<void> cancel() async {
+    if (data == null || _s(data!['status']) == 'cancelled' || _s(data!['status']) == 'completed') return;
     final reason = await showDialog<String>(
       context: context,
       builder: (_) {
