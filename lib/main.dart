@@ -290,7 +290,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final ConnectivityService connectivity;
 
   bool get showMaintenance =>
-      widget.user.permissions.contains('maintenance.view');
+      currentUser.permissions.contains('maintenance.view');
 
   @override
   void initState() {
