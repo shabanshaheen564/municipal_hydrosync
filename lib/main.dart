@@ -324,7 +324,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       WorkOrdersScreen(api: widget.api, syncService: syncService),
       if (showMaintenance)
         MaintenanceListPage(api: widget.api, user: currentUser),
-      MapScreen(api: widget.api, syncService: syncService),
+      MapScreen(api: widget.api, syncService: syncService, user: currentUser),
       ProfileScreen(
         user: currentUser,
         api: widget.api,
