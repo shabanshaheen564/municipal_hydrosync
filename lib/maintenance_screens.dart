@@ -51,16 +51,23 @@ Map<String, dynamic> _normalizeFeature(dynamic raw) {
 
   final nested = _mapValue(feature['gis_feature']);
   final source = nested.isNotEmpty ? nested : feature;
+  final rawGeojson = _mapValue(source['geojson']);
+  final geojsonGeometry = rawGeojson['type']?.toString() == 'Feature'
+      ? _mapValue(rawGeojson['geometry'])
+      : rawGeojson;
   final geometry = _mapValue(source['geometry']);
-  final geojson = _mapValue(source['geojson']);
   final values = _mapValue(source['values']);
+  final assetValues = _mapValue(source['asset_values']);
   final properties = _mapValue(source['properties']);
 
   return {
     ...source,
-    'values': values.isNotEmpty ? values : properties,
-    'geojson': geojson.isNotEmpty
-        ? geojson
+    'values': values.isNotEmpty
+        ? values
+        : (assetValues.isNotEmpty ? assetValues : properties),
+    'geometry': geometry.isNotEmpty ? geometry : geojsonGeometry,
+    'geojson': rawGeojson.isNotEmpty
+        ? rawGeojson
         : (geometry.isNotEmpty
             ? {
                 'type': 'Feature',
