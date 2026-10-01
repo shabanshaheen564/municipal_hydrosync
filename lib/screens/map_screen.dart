@@ -183,7 +183,7 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () async {
                 try {
                   final fresh = await widget.api.getOne('/complaints/${m['id']}');
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
@@ -201,7 +201,7 @@ class _MapScreenState extends State<MapScreen> {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.red.withOpacity(0.4),
+                      color: Colors.red.withValues(alpha: 0.4),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -230,7 +230,7 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () async {
                 try {
                   final fresh = await widget.api.getOne('/work-orders/${m['id']}');
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
@@ -248,7 +248,7 @@ class _MapScreenState extends State<MapScreen> {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.orange.withOpacity(0.4),
+                      color: Colors.orange.withValues(alpha: 0.4),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -280,7 +280,7 @@ class _MapScreenState extends State<MapScreen> {
                     '/maintenance/requests/${m['id']}',
                     forceRefresh: true,
                   );
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
@@ -305,7 +305,7 @@ class _MapScreenState extends State<MapScreen> {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.deepPurple.withOpacity(0.4),
+                      color: Colors.deepPurple.withValues(alpha: 0.4),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
