@@ -107,7 +107,7 @@ class ApiClient {
         method: method,
         path: path,
       );
-    } on SocketException catch (e) {
+    } on SocketException {
       throw ApiException(
         0,
         'السيرفر لا يستجيب حالياً، تحقق من اتصال الإنترنت وحاول مرة أخرى.',
