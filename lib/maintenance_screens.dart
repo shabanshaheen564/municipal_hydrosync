@@ -656,6 +656,7 @@ class MaintenanceDetailsPage extends StatefulWidget {
 class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   Map<String, dynamic>? data;
   bool loading = true;
+  bool changed = false;
 
   bool get canUpdate => widget.user.permissions.contains('maintenance.update');
   bool get canComplete => widget.user.permissions.contains('maintenance.complete');
@@ -686,7 +687,10 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
       builder: (_) => MaintenanceEditDialog(api: widget.api, user: widget.user, data: data!),
     );
     if (updated != null && mounted) {
-      setState(() => data = updated);
+      setState(() {
+        data = updated;
+        changed = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم تحديث طلب الصيانة بنجاح')),
       );
@@ -699,7 +703,10 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
       context,
       MaterialPageRoute(builder: (_) => MaintenanceJobPage(api: widget.api, user: widget.user, data: data!)),
     );
-    if (changed == true && mounted) load();
+    if (changed == true && mounted) {
+      await load();
+      this.changed = true;
+    }
   }
 
   Future<void> cancel() async {
@@ -732,6 +739,11 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     }
   }
 
+  Future<bool> _handleBack() async {
+    if (mounted) Navigator.pop(context, changed);
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading && data == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -739,8 +751,10 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     final feature = _normalizeFeature(x['gis_feature'] ?? x);
     final jobs = (x['jobs'] as List?) ?? const [];
     final inspections = (x['inspections'] as List?) ?? const [];
-    return Scaffold(
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: _handleBack,
+      child: Scaffold(
+        appBar: AppBar(
         title: Text(_s(x['request_no'])),
         actions: [if (canUpdate) IconButton(onPressed: edit, icon: const Icon(Icons.edit))],
       ),
@@ -783,6 +797,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
               OutlinedButton.icon(onPressed: cancel, icon: const Icon(Icons.cancel_outlined), label: const Text('إلغاء الطلب')),
             ],
           ],
+        ),
         ),
       ),
     );
