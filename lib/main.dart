@@ -166,17 +166,13 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 82,
-                      height: 82,
-                      decoration: BoxDecoration(
-                        color: Theme.of(c).colorScheme.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.water_drop,
-                        size: 44,
-                        color: Theme.of(c).colorScheme.primary,
+                    SizedBox(
+                      width: 110,
+                      height: 110,
+                      child: Image.asset(
+                        'assets/icon/app_icon.png',
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
                       ),
                     ),
                     const SizedBox(height: 16),
