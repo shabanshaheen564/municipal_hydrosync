@@ -185,6 +185,7 @@ class _MapScreenState extends State<MapScreen> {
     final markers = <Marker>[];
     final complaints = (data?['complaints'] as List?) ?? const [];
     final workOrders = (data?['work_orders'] as List?) ?? const [];
+    final maintenance = (data?['maintenance'] as List?) ?? const [];
 
     // Add complaint markers
     for (final raw in complaints) {
@@ -280,6 +281,66 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 child: const Icon(
                   Icons.engineering,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    // Add maintenance markers
+    for (final raw in maintenance) {
+      final m = Map<String, dynamic>.from(raw);
+      final lat = (m['latitude'] as num?)?.toDouble();
+      final lng = (m['longitude'] as num?)?.toDouble();
+
+      if (lat != null && lng != null) {
+        markers.add(
+          Marker(
+            point: LatLng(lat, lng),
+            width: 48,
+            height: 48,
+            child: GestureDetector(
+              onTap: () async {
+                try {
+                  final fresh = await widget.api.getOne(
+                    '/maintenance/requests/\${m['id']}',
+                    forceRefresh: true,
+                  );
+                  if (!mounted) return;
+                  await showModalBottomSheet<bool>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => MaintenanceDetailsManager(
+                      api: widget.api,
+                      data: fresh,
+                    ),
+                  );
+                  await load(forceRefresh: true);
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('\$e')),
+                  );
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.build,
                   color: Colors.white,
                   size: 28,
                 ),
@@ -391,6 +452,22 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text('${workOrders.length} مهام'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('\${maintenance.length} صيانة'),
                     ],
                   ),
                 ],
