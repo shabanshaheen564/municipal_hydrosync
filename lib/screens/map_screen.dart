@@ -183,10 +183,9 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () async {
                 try {
                   final fresh = await widget.api.getOne('/complaints/${m['id']}');
-                  if (!mounted) return;
-                  final sheetContext = context;
+                  if (!context.mounted) return;
                   await showModalBottomSheet<bool>(
-                    context: sheetContext,
+                    context: context,
                     isScrollControlled: true,
                     builder: (_) => ComplaintManager(api: widget.api, data: fresh),
                   );
