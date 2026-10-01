@@ -6,7 +6,6 @@ import 'package:latlong2/latlong.dart';
 import '../api.dart';
 import '../models.dart';
 import '../sync_service.dart';
-import '../utils.dart';
 import '../mobile_management.dart';
 import '../maintenance_screens.dart';
 
