@@ -522,7 +522,7 @@ class _MaintenanceInspectPageState extends State<MaintenanceInspectPage> {
       featureLoading = true;
     });
     try {
-      features = await widget.api.list('/maintenance/datasets/${id}/features', query: {'per_page': '100'});
+      features = await widget.api.list('/maintenance/datasets/$id/features', query: {'per_page': '100'});
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
