@@ -288,7 +288,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int tab = 0;
   int pending = 0;
-  late final List<Widget> pages;
+  late List<Widget> pages;
+  late SessionUser currentUser;
   late final SyncService syncService;
   late final ConnectivityService connectivity;
 
@@ -298,33 +299,54 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    currentUser = widget.user;
     WidgetsBinding.instance.addObserver(this);
     connectivity = ConnectivityService();
     connectivity.init();
 
     syncService = SyncService(widget.api);
+    _rebuildPages();
+    syncService.pending.addListener(_syncChanged);
+    connectivity.isOnline.addListener(_connectivityChanged);
+    syncService.start();
+  }
+
+  bool _permissionsChanged(SessionUser next) =>
+      currentUser.roles.join('|') != next.roles.join('|') ||
+      currentUser.permissions.join('|') != next.permissions.join('|');
+
+  void _rebuildPages() {
     final mapTab = showMaintenance ? 4 : 3;
     pages = [
       DashboardScreen(
         api: widget.api,
-        user: widget.user,
+        user: currentUser,
         syncService: syncService,
         onOpenTab: (i) => setState(() => tab = i == 3 ? mapTab : i),
       ),
       ComplaintsScreen(api: widget.api, syncService: syncService),
       WorkOrdersScreen(api: widget.api, syncService: syncService),
       if (showMaintenance)
-        MaintenanceListPage(api: widget.api, user: widget.user),
+        MaintenanceListPage(api: widget.api, user: currentUser),
       MapScreen(api: widget.api, syncService: syncService),
       ProfileScreen(
-        user: widget.user,
+        user: currentUser,
         api: widget.api,
         onLogout: widget.onLogout,
       ),
     ];
-    syncService.pending.addListener(_syncChanged);
-    connectivity.isOnline.addListener(_connectivityChanged);
-    syncService.start();
+  }
+
+  Future<void> _refreshSessionIfNeeded() async {
+    final next = await widget.api.refreshSession();
+    if (!mounted || next == null || !_permissionsChanged(next)) return;
+
+    final maintenanceVisible = next.permissions.contains('maintenance.view');
+    currentUser = next;
+    final maxTab = pages.length - 1;
+    if (tab > maxTab) tab = 0;
+    if (!maintenanceVisible && tab == 3) tab = 0;
+    setState(_rebuildPages);
   }
 
   void _syncChanged() {
@@ -349,6 +371,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshSessionIfNeeded());
       unawaited(syncService.syncNow());
     }
   }
