@@ -496,18 +496,23 @@ class ApiClient {
     String endpoint,
     Map<String, dynamic> body,
   ) async {
+    final payload = {
+      ...body,
+      'idempotency_key': body['idempotency_key'] ?? _newIdempotencyKey(),
+    };
+
     try {
       final result = Map<String, dynamic>.from(
-        await _send('PUT', endpoint, body: body),
+        await _send('PUT', endpoint, body: payload),
       );
       await LocalStore.clearCache();
       return result;
     } on ApiException catch (e) {
       if (e.status != 0) rethrow;
       final user = await _userCacheId();
-      final qid = LocalStore.enqueue('PUT', endpoint, body);
+      final qid = LocalStore.enqueue('PUT', endpoint, payload);
       await LocalStore.patchEndpoint(user, endpoint, {
-        ...body,
+        ...payload,
         'queued': true,
         'local_pending': true,
         'local_queue_id': qid,
@@ -602,6 +607,12 @@ class ApiClient {
     await refresh('/work-orders', query: {'per_page': '100'});
     await refresh('/map/operational');
     await refresh('/reports/summary');
+
+    final sessionUser = await session();
+    if (sessionUser?.permissions.contains('maintenance.view') == true) {
+      await refresh('/maintenance/requests', query: {'per_page': '100'});
+      await refresh('/maintenance/datasets', query: {'per_page': '100'});
+    }
     if (refreshed) await LocalStore.setLastSyncNow();
     return refreshed;
   }
@@ -630,9 +641,11 @@ class ApiClient {
               ? Map<String, dynamic>.from(item['body'])
               : <String, dynamic>{};
 
-      final isCreate =
+        final isCreate =
           method == 'POST' &&
-          (endpoint == '/complaints' || endpoint == '/work-orders');
+          (endpoint == '/complaints' ||
+              endpoint == '/work-orders' ||
+              endpoint == '/maintenance/requests');
 
       if (isCreate && body['idempotency_key'] == null) {
         body['idempotency_key'] = _newIdempotencyKey();

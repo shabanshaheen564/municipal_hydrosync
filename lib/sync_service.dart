@@ -122,6 +122,22 @@ class SyncService {
       await _cacheListPages('/complaints');
       await _cacheListPages('/work-orders');
 
+      final sessionUser = await api.session();
+      if (sessionUser?.permissions.contains('maintenance.view') == true) {
+        await _cacheListPages('/maintenance/requests');
+
+        final datasets = await api.list(
+          '/maintenance/datasets',
+          query: {'per_page': '100'},
+          forceRefresh: true,
+        );
+        for (final dataset in datasets.items) {
+          final datasetId = dataset['id'];
+          if (datasetId == null) continue;
+          await _cacheListPages('/maintenance/datasets/$datasetId/features');
+        }
+      }
+
       await refresh();
       final remaining = await api.pendingCount();
       failed.value = LocalStore.failedCount;
