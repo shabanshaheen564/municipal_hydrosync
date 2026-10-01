@@ -82,7 +82,7 @@ class ComplaintManager extends StatelessWidget {
           ));
           if (confirmed != true || !context.mounted) return;
           try {
-            await api.delete('/complaints/' + data['id'].toString());
+            await api.delete('/complaints/${data['id']}');
             if (context.mounted) Navigator.pop(context, true);
           } catch (e) {
             if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -120,7 +120,7 @@ class WorkOrderManager extends StatelessWidget {
           ));
           if (confirmed != true || !context.mounted) return;
           try {
-            await api.delete('/work-orders/' + data['id'].toString());
+            await api.delete('/work-orders/${data['id']}');
             if (context.mounted) Navigator.pop(context, true);
           } catch (e) {
             if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
