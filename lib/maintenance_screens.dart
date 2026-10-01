@@ -1080,7 +1080,7 @@ class _MaintenanceJobPageState extends State<MaintenanceJobPage> {
   Future<void> save() async {
     setState(() => busy = true);
     try {
-      await widget.api.create('/maintenance/requests/' + widget.data['id'].toString() + '/jobs', {
+      await widget.api.create('/maintenance/requests/${widget.data['id']}/jobs', {
         if (technicianId != null) 'technician_id': technicianId,
         'result': result,
         if (fault.text.trim().isNotEmpty) 'diagnosed_fault': fault.text.trim(),
