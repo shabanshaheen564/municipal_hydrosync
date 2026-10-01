@@ -727,7 +727,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     );
     if (reason == null || reason.isEmpty) return;
     try {
-      await widget.api.create('/maintenance/requests/' + widget.id.toString() + '/cancel', {'cancellation_reason': reason});
+      await widget.api.create('/maintenance/requests/${widget.id}/cancel', {'cancellation_reason': reason});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم إلغاء طلب الصيانة بنجاح')),
