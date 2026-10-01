@@ -198,11 +198,7 @@ class _MaintenanceListPageState extends State<MaintenanceListPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               subtitle: Text(
-                                maintenanceStatusLabel(_s(item['status'])) +
-                                    ' • ' +
-                                    maintenancePriorityLabel(_s(item['priority'])) +
-                                    '\n' +
-                                    _s(item['problem_description']),
+                                '${maintenanceStatusLabel(_s(item['status']))} • ${maintenancePriorityLabel(_s(item['priority']))}\n${_s(item['problem_description'])}',
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -866,15 +862,11 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
       children: items.map((raw) {
         final item = Map<String, dynamic>.from(raw as Map);
         final first = inspection
-            ? maintenanceResultLabel(_s(item['result'])) + ' — ' + _s(item['inspected_by'])
-            : maintenanceResultLabel(_s(item['result'])) + ' — ' + _s(item['technician_name']);
+            ? '${maintenanceResultLabel(_s(item['result']))} — ${_s(item['inspected_by'])}'
+            : '${maintenanceResultLabel(_s(item['result']))} — ${_s(item['technician_name'])}';
         final second = inspection
-            ? _s(item['inspection_at']) + '\n' + _s(item['problem_description'] ?? item['notes'])
-            : _s(item['started_at']) + '\n' +
-                _s(item['diagnosed_fault']) + '\n' +
-                _s(item['repair_action']) + '\n' +
-                _s(item['materials_used']) + '\n' +
-                _s(item['notes']);
+            ? '${_s(item['inspection_at'])}\n${_s(item['problem_description'] ?? item['notes'])}'
+            : '${_s(item['started_at'])}\n${_s(item['diagnosed_fault'])}\n${_s(item['repair_action'])}\n${_s(item['materials_used'])}\n${_s(item['notes'])}';
         return ListTile(title: Text(first), subtitle: Text(second));
       }).toList(),
     ),
