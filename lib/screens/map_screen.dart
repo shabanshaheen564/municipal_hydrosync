@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../api.dart';
+import '../models.dart';
 import '../sync_service.dart';
 import '../utils.dart';
 import '../mobile_management.dart';
@@ -161,7 +162,6 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -189,7 +189,6 @@ class _MapScreenState extends State<MapScreen> {
     final workOrders = (data?['work_orders'] as List?) ?? const [];
     final maintenance = (data?['maintenance'] as List?) ?? const [];
 
-    // Add complaint markers
     for (final raw in complaints) {
       final m = Map<String, dynamic>.from(raw);
       final lat = (m['latitude'] as num?)?.toDouble();
@@ -229,11 +228,7 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.report_problem,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Icons.report_problem, color: Colors.white, size: 28),
               ),
             ),
           ),
@@ -241,7 +236,6 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
 
-    // Add work order markers
     for (final raw in workOrders) {
       final m = Map<String, dynamic>.from(raw);
       final lat = (m['latitude'] as num?)?.toDouble();
@@ -266,7 +260,7 @@ class _MapScreenState extends State<MapScreen> {
                   await load();
                 } catch (e) {
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\$e')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
                 }
               },
               child: Container(
@@ -281,11 +275,7 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.engineering,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Icons.engineering, color: Colors.white, size: 28),
               ),
             ),
           ),
@@ -293,7 +283,6 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
 
-    // Add maintenance markers
     for (final raw in maintenance) {
       final m = Map<String, dynamic>.from(raw);
       final lat = (m['latitude'] as num?)?.toDouble();
@@ -327,7 +316,7 @@ class _MapScreenState extends State<MapScreen> {
                 } catch (e) {
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('\$e')),
+                    SnackBar(content: Text('$e')),
                   );
                 }
               },
@@ -343,11 +332,7 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.build,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                child: const Icon(Icons.build, color: Colors.white, size: 28),
               ),
             ),
           ),
@@ -417,7 +402,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
         ),
-        // Stats card
         Positioned(
           top: 78,
           right: 12,
@@ -471,7 +455,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text('\${maintenance.length} صيانة'),
+                      Text('${maintenance.length} صيانة'),
                     ],
                   ),
                 ],
