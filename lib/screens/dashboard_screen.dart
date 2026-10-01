@@ -171,10 +171,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: Row(
           children: [
-            const CircleAvatar(
-              radius: 29,
-              backgroundColor: Colors.white24,
-              child: Icon(Icons.water_drop, color: Colors.white, size: 30),
+            SizedBox(
+              width: 58,
+              height: 58,
+              child: Image.asset(
+                'assets/icon/app_icon.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
