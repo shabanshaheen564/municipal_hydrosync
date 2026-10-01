@@ -187,9 +187,7 @@ class _MaintenanceListPageState extends State<MaintenanceListPage> {
                         itemCount: items.length,
                         itemBuilder: (_, i) {
                           final item = items[i];
-                          final feature = item['gis_feature'] is Map
-                              ? Map<String, dynamic>.from(item['gis_feature'])
-                              : <String, dynamic>{};
+                          final feature = _normalizeFeature(item['gis_feature'] ?? item);
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             child: ListTile(
@@ -217,6 +215,7 @@ class _MaintenanceListPageState extends State<MaintenanceListPage> {
                                       api: widget.api,
                                       user: widget.user,
                                       id: (item['id'] as num).toInt(),
+                                      initialData: item,
                                     ),
                                   ),
                                 );
@@ -641,7 +640,14 @@ class MaintenanceDetailsPage extends StatefulWidget {
   final ApiClient api;
   final SessionUser user;
   final int id;
-  const MaintenanceDetailsPage({super.key, required this.api, required this.user, required this.id});
+  final Map<String, dynamic>? initialData;
+  const MaintenanceDetailsPage({
+    super.key,
+    required this.api,
+    required this.user,
+    required this.id,
+    this.initialData,
+  });
 
   @override
   State<MaintenanceDetailsPage> createState() => _MaintenanceDetailsPageState();
@@ -658,7 +664,12 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   @override
   void initState() {
     super.initState();
-    load();
+    data = widget.initialData;
+    if (data != null) {
+      loading = false;
+    } else {
+      load();
+    }
   }
 
   Future<void> load() async {
@@ -934,7 +945,7 @@ class _MaintenanceEditDialogState extends State<MaintenanceEditDialog> {
         'fault_description': _s(widget.data['fault_description']),
         'notes': _s(widget.data['notes']),
       });
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, updated);
     } catch (e) {
       if (mounted) {
         setState(() => busy = false);
