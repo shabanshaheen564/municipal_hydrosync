@@ -673,11 +673,16 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
 
   Future<void> edit() async {
     if (data == null) return;
-    final changed = await showDialog<bool>(
+    final updated = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => MaintenanceEditDialog(api: widget.api, user: widget.user, data: data!),
     );
-    if (changed == true && mounted) load();
+    if (updated != null && mounted) {
+      setState(() => data = updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحديث طلب الصيانة بنجاح')),
+      );
+    }
   }
 
   Future<void> execute() async {
@@ -707,7 +712,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     );
     if (reason == null || reason.isEmpty) return;
     try {
-      final updated = await widget.api.create('/maintenance/requests/' + widget.id.toString() + '/cancel', {'cancellation_reason': reason});
+      await widget.api.create('/maintenance/requests/' + widget.id.toString() + '/cancel', {'cancellation_reason': reason});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم إلغاء طلب الصيانة بنجاح')),
