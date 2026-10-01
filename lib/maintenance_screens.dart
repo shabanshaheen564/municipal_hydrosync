@@ -341,7 +341,7 @@ class _MaintenanceCreatePageState extends State<MaintenanceCreatePage> {
       featureLoading = true;
     });
     try {
-      final result = await widget.api.list('/maintenance/datasets/' + id.toString() + '/features', query: {'per_page': '100'});
+      final result = await widget.api.list('/maintenance/datasets/${id}/features', query: {'per_page': '100'});
       if (mounted) setState(() => features = result);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -526,7 +526,7 @@ class _MaintenanceInspectPageState extends State<MaintenanceInspectPage> {
       featureLoading = true;
     });
     try {
-      features = await widget.api.list('/maintenance/datasets/' + id.toString() + '/features', query: {'per_page': '100'});
+      features = await widget.api.list('/maintenance/datasets/${id}/features', query: {'per_page': '100'});
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
