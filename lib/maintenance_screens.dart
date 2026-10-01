@@ -337,7 +337,7 @@ class _MaintenanceCreatePageState extends State<MaintenanceCreatePage> {
       featureLoading = true;
     });
     try {
-      final result = await widget.api.list('/maintenance/datasets/${id}/features', query: {'per_page': '100'});
+      final result = await widget.api.list('/maintenance/datasets/$id/features', query: {'per_page': '100'});
       if (mounted) setState(() => features = result);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -668,7 +668,7 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
 
   Future<void> load() async {
     try {
-      final result = await widget.api.getOne('/maintenance/requests/$id', forceRefresh: true);
+      final result = await widget.api.getOne('/maintenance/requests/${widget.id}', forceRefresh: true);
       if (mounted) setState(() => data = result);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -733,11 +733,6 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
-  }
-
-  Future<bool> _handleBack() async {
-    if (mounted) Navigator.pop(context, changed);
-    return false;
   }
 
   @override
