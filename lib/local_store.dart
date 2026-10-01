@@ -245,8 +245,9 @@ class LocalStore {
           ...Map<String, dynamic>.from(data),
           'data': [record, ...(data['data'] as List)],
         });
-      } else if (data is List)
+      } else if (data is List) {
         await writeCache(keyString, [record, ...data]);
+      }
     }
   }
   static Future<void> reconcileCreatedRecord(
