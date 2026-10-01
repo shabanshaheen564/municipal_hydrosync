@@ -123,7 +123,7 @@ class _MaintenanceListPageState extends State<MaintenanceListPage> {
       if (search.trim().isNotEmpty) query['search'] = search.trim();
       if (status != null) query['status'] = status!;
       if (priority != null) query['priority'] = priority!;
-      final result = await widget.api.list('/maintenance/requests', query: query);
+      final result = await widget.api.list('/maintenance/requests', query: query, forceRefresh: true);
       if (mounted) setState(() => data = result);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -665,11 +665,8 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   void initState() {
     super.initState();
     data = widget.initialData;
-    if (data != null) {
-      loading = false;
-    } else {
-      load();
-    }
+    loading = data == null;
+    load();
   }
 
   Future<void> load() async {
