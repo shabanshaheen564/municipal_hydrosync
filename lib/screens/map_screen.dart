@@ -7,12 +7,14 @@ import '../api.dart';
 import '../sync_service.dart';
 import '../utils.dart';
 import '../mobile_management.dart';
+import '../maintenance_screens.dart';
 
 class MapScreen extends StatefulWidget {
   final ApiClient api;
   final SyncService syncService;
+  final SessionUser user;
 
-  const MapScreen({super.key, required this.api, required this.syncService});
+  const MapScreen({super.key, required this.api, required this.syncService, required this.user});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -212,7 +214,7 @@ class _MapScreenState extends State<MapScreen> {
                   await load();
                 } catch (e) {
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('\$e')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
                 }
               },
               child: Container(
@@ -307,16 +309,18 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () async {
                 try {
                   final fresh = await widget.api.getOne(
-                    '/maintenance/requests/\${m['id']}',
+                    '/maintenance/requests/${m['id']}',
                     forceRefresh: true,
                   );
                   if (!mounted) return;
                   await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
-                    builder: (_) => MaintenanceDetailsManager(
+                    builder: (_) => MaintenanceDetailsPage(
                       api: widget.api,
-                      data: fresh,
+                      user: widget.user,
+                      id: (m['id'] as num).toInt(),
+                      initialData: fresh,
                     ),
                   );
                   await load(forceRefresh: true);
