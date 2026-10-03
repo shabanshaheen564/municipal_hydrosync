@@ -1160,8 +1160,9 @@ class MaintenanceMapCard extends StatelessWidget {
                 options: MapOptions(initialCenter: shape.center!, initialZoom: 16),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: const ['a', 'b', 'c'],
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'ps.modb.water',
+                    maxNativeZoom: 19,
                   ),
                   if (shape.polygons.isNotEmpty) PolygonLayer(polygons: shape.polygons),
                   if (shape.polylines.isNotEmpty) PolylineLayer(polylines: shape.polylines),
